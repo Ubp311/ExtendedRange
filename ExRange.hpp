@@ -1,5 +1,4 @@
-#include    <vector>
-#include    <string>
+#include	<vector>
 
 
 using namespace std;
@@ -9,14 +8,16 @@ const unsigned int  kIntLimit = 2147483648U;
 const unsigned int  kValStrParseLimit = 100000000U;
 const unsigned int  kValStrParseLimitDigitNum = 8U;
 
-string  uitos(unsigned int val)
+
+
+string uitos(unsigned int _val)
 {
     string  resultStr;
 
-    unsigned int tempVal = val;
-    unsigned int mul = 1U;
+    unsigned int    tempVal = _val;
+    unsigned int    mul = 1U;
 
-    if (val == 0U)
+    if (_val == 0U)
         return  "0";
     while (tempVal != 0U)
     {
@@ -26,12 +27,16 @@ string  uitos(unsigned int val)
     mul /= 10U;
     while (mul != 0U)
     {
-        resultStr += val / mul + '0';
-        val -= val / mul * mul;
+        resultStr += _val / mul + '0';
+        _val -= _val / mul * mul;
         mul /= 10U;
     }
-    
+
     return  resultStr;
+}
+
+namespace exRange
+{
 };
 
 template<typename T>
@@ -43,24 +48,101 @@ template<>
 class ExRange<unsigned int>
 {
 private:
-    vector<unsigned int>    val;
 public:
+    vector<unsigned int>    val;
+
     ExRange()
     {
-        val = vector<unsigned int>();
     };
     ExRange(unsigned int _val)
     {
         val.push_back(_val);
     };
-    ExRange(const ExRange<unsigned int>& _var)
+    ExRange operator=(const ExRange& _var)
     {
         for (size_t i = 0; i < _var.val.size(); i++)
             val.push_back(_var.val[i]);
+
+        return  *this;
     };
-    ExRange(const ExRange<int>& _var)
+
+    ExRange<unsigned int> operator*(unsigned int _val)
     {
-        
+        ExRange<unsigned int>   result;
+
+        size_t  i = 0;
+
+        unsigned long long  mul;
+        unsigned int carry = 0U;
+
+        for (; i < val.size(); i++)
+        {
+            mul = (unsigned long long)val[i] * _val + carry;
+            carry = mul / kUIntLimit;
+            result.val.push_back(mul % kUIntLimit);
+        }
+        if (carry != 0)
+            result.val.push_back(carry);
+
+        return  result;
+    };
+    ExRange<unsigned int>   operator/(unsigned int _val)
+    {
+
+    };
+    ExRange<unsigned int>   operator%(unsigned int _val)
+    {
+
+    };
+    ExRange<unsigned int>   operator+(unsigned int _val)
+    {
+        ExRange<unsigned int>   result;
+
+        size_t i = 0;
+
+        int carry = 0;
+
+        result.val.push_back(val[i] + _val);
+        if (result.val[i] < val[i])
+            carry = 1;
+        for (; i < val.size(); i++)
+        {
+            result.val.push_back(val[i] + carry);
+            if (result.val[i] > val[i] + carry)
+            {
+                carry = 1;
+                continue;
+            }
+            carry = 0;
+        }
+    };
+    ExRange<unsigned int>   operator-(unsigned int _val)
+    {
+
+    };
+
+    ExRange<unsigned int>   operator+(ExRange<unsigned int> _var)
+    {
+        ExRange<unsigned int>   result;
+
+        size_t  i = 0;
+
+        unsigned int    add;
+        int carry = 0;
+
+        for (; i < val.size() && _var.val.size(); i++)
+        {
+            add = val[i] + _var.val[i] + carry;
+            result.val.push_back(add);
+            if (add < val[i])
+            {
+                carry = 1;
+                continue;
+            }
+            carry = 0;
+        }
+        if (carry != 0)
+            result.val.push_back(carry);
     };
 };
 
@@ -72,18 +154,17 @@ private:
 public:
     ExRange()
     {
-        val.clear();
+        val = vector<unsigned int>();
     };
     ExRange(int _val)
     {
-        val.clear();
         val.push_back(_val);
     };
     ExRange(const string& _valStr)
     {
         size_t  i = 0;
         size_t  j = 0;
-    
+
         ExRange<int>    quotient, remainders;
         unsigned long long  partialQuotient = 0ULL;
         unsigned long long  tempPartialQuotient = 0ULL;
@@ -94,8 +175,6 @@ public:
         int mul = 1;
 
         int isNegative = 0;
-
-        val.clear();
 
         if (!_valStr.empty())
         {
@@ -129,24 +208,19 @@ public:
             }
             while (quotient != 0)
             {
-                size_t  tempSize;
-
-                partialQuotient = quotient.val[quotient.val.size() - 1] / kUIntLimit;
                 remainder = quotient.val[quotient.val.size() - 1] % kUIntLimit;
-                quotient.val[quotient.val.size() - 1] = partialQuotient;
-                if (partialQuotient == 0ULL)
-                    quotient.val.pop_back();
-                tempSize = quotient.val.size();
-                for (size_t i = 0; i < tempSize; i++)
+                quotient.val.pop_back();
+                for (i = 0; i < quotient.val.size(); i++)
                 {
                     remainder *= kValStrParseLimit;
-                    remainder += quotient.val[tempSize - i - 1];
-                    quotient.val[tempSize - i - 1] = remainder / kUIntLimit;
-                    if (quotient.val[tempSize - i - 1] == 0U)
-                        quotient.val.pop_back();
+                    remainder += quotient.val[quotient.val.size() - i - 1];
+                    quotient.val[quotient.val.size() - i - 1] = remainder / kUIntLimit;
                     remainder %= kUIntLimit;
                 }
                 remainders.val.push_back(remainder);
+                    quotient.val.push_back(0U);
+                if (!quotient.val.empty() && quotient.val[quotient.val.size() - 1] == 0U)
+                    quotient.val.pop_back();
                 if (quotient.val.empty())
                     quotient.val.push_back(0U);
             }
@@ -174,29 +248,43 @@ public:
             val = remainders.val;
         }
     }
-
-    ExRange(const ExRange& _var)
+	ExRange(const ExRange& _var)
+	{
+		for (size_t i = 0; i < _var.val.size(); i++)
+			val.push_back(_var.val[i]);
+	}
+    ~ExRange()
     {
-        val.clear();
-
-        for (size_t i = 0; i < _var.val.size(); i++)
-            val.push_back(_var.val[i]);
+        vector<unsigned int> temp;
+        val.swap(temp);
+    };
+    bool    isEmpty()
+    {
+        return val.empty();
     };
 
-    operator string()
+    operator ExRange<unsigned int>()
     {
-        
+        if (val.size() > 1)
+        {
+            if (val[val.size() - 1] == 0)
+            {
+                if (val[val.size() - 2] < kIntLimit)
+                    val[val.size() - 2] += kIntLimit;
+            }
+            val.pop_back();
+        }
     };
 
-    string decode(const ExRange& _var)
+    static string decode(ExRange& var)
     {
         string  resultStr;
 
-        size_t  i;
+        size_t  i, j, k;
 
         const unsigned int base[2] = { kUIntLimit % kValStrParseLimit, kUIntLimit / kValStrParseLimit };
         ExRange<int>    mul(1);
-        ExRange<int>    mulResult(0);
+        ExRange<int>    tempMul(0);
         ExRange<int>    result(0);
 
         bool    isOverflow = false;
@@ -204,32 +292,37 @@ public:
 
         unsigned int    vals[2];
 
-        if (val[val.size() - 1] == 0U && val.size() >= 2)
+        unsigned int    carry;
+
+        if (var.val[var.val.size() - 1] == 0U && var.val.size() >= 2)
         {
-            if (val[val.size() - 2] < kIntLimit)
+            if (var.val[var.val.size() - 2] < kIntLimit)
             {
                 isNegative = true;
-                val[val.size() - 2] += kIntLimit;
+                var.val[var.val.size() - 2] += kIntLimit;
             }
             isOverflow = true;
-            val.pop_back();
+            var.val.pop_back();
         }
-        else if (val[val.size() - 1] >= kIntLimit)
+        else if (var.val[var.val.size() - 1] >= kIntLimit)
         {
             isNegative = true;
-            val[val.size() - 1] *= -1;
+            var.val[var.val.size() - 1] *= -1;
         }
-        for (i = 0; i < val.size(); i++)
+        for (i = 0; i < var.val.size(); i++)
         {
-            mulResult.val.clear();
-            vals[0] = val[i] % kValStrParseLimit;
-            vals[1] = val[i] / kValStrParseLimit;
-            for (size_t j = 0; j < mul.val.size(); j++)
+            unsigned int    tempCarry = 0U;
+
+            tempMul.val.clear();
+            vals[0] = var.val[i] % kValStrParseLimit;
+            vals[1] = var.val[i] / kValStrParseLimit;
+            for (j = 0; j < mul.val.size(); j++)
             {
                 unsigned long long  tempMul;
-                unsigned int    carry = 0U;
+                carry = tempCarry;
+                tempCarry = 0U;
 
-                for (size_t k = 0; k < 2; k++)
+                for (k = 0; k < 2; k++)
                 {
                     tempMul = (unsigned long long)mul.val[j] * (unsigned long long)vals[k] + carry;
                     carry = tempMul / kValStrParseLimit;
@@ -240,44 +333,56 @@ public:
                     result.val[j + k] = ((unsigned long long)result.val[j + k] + tempMul) % kValStrParseLimit;
                 }
                 if (carry != 0U)
-                    result.val.push_back(carry);
-            }
-            for (size_t j = 0; j < mul.val.size(); j++)
-            {
-                unsigned long long  tempMul;
-                unsigned int    carry = 0U;
-
-                for (size_t k = 0; k < 2; k++)
                 {
-                    tempMul = (unsigned long long)mul.val[j] * (unsigned long long)base[k] + carry;
-                    carry = tempMul / kValStrParseLimit;
-                    tempMul %= kValStrParseLimit;
-                    if (j + k >= mulResult.val.size())
-                        mulResult.val.push_back(0U);
-                    carry += ((unsigned long long)mulResult.val[j + k] + tempMul) / kValStrParseLimit;
-                    mulResult.val[j + k] = ((unsigned long long)mulResult.val[j + k] + tempMul) % kValStrParseLimit;
+                    if (j + k < result.val.size())
+                    {
+                        result.val[j + k] += carry;
+                        if (result.val[j + k] >= kValStrParseLimit)
+                        {
+                            result.val[j + k] %= kValStrParseLimit;
+                            tempCarry = 1U;
+                        }
+                    }
+                    else
+                        result.val.push_back(carry);
+                }
+            }
+            for (j = 0; j < mul.val.size(); j++)
+            {
+                unsigned long long  result;
+                carry = 0U;
+
+                for (k = 0; k < 2; k++)
+                {
+                    result = (unsigned long long)mul.val[j] * (unsigned long long)base[k] + carry;
+                    carry = result / kValStrParseLimit;
+                    result %= kValStrParseLimit;
+                    if (j + k >= tempMul.val.size())
+                        tempMul.val.push_back(0U);
+                    carry += ((unsigned long long)tempMul.val[j + k] + result) / kValStrParseLimit;
+                    tempMul.val[j + k] = ((unsigned long long)tempMul.val[j + k] + result) % kValStrParseLimit;
                 }
                 if (carry != 0U)
-                    mulResult.val.push_back(carry);
+                    tempMul.val.push_back(carry);
             }
-            mul = mulResult;
+            mul.val = tempMul.val;
         }
-		for (; i > 0; i--)
-		{
-			if (result.val[i] != 0U)
-				break;
-			else
-				result.val.pop_back();
-		}
+        for (i = result.val.size() - 1; i > 0; i--)
+        {
+            if (result.val[i] != 0U)
+                break;
+            else
+                result.val.pop_back();
+        }
         if (isOverflow)
         {
-            val.push_back(0U);
             if (isNegative)
-                val[val.size() - 1] -= kIntLimit;
+                var.val[var.val.size() - 1] -= kIntLimit;
+            var.val.push_back(0U);
         }
         else if (isNegative)
         {
-            val[val.size() - 1] *= -1;
+            var.val[var.val.size() - 1] *= -1;
             resultStr += '-';
         }
         i = result.val.size() - 1;
@@ -318,8 +423,8 @@ public:
 
     ExRange& operator=(const ExRange& _var)
     {
-        val.clear();
-
+        if (_var.val.empty())
+            val.clear();
         for (size_t i = 0; i < _var.val.size(); i++)
             val.push_back(_var.val[i]);
 
@@ -341,8 +446,6 @@ public:
         bool    isNegative = 0;
 
         unsigned long long  mul;
-
-        val.clear();
 
         if (!_valStr.empty())
         {
@@ -376,24 +479,19 @@ public:
             }
             while (quotient != 0)
             {
-                size_t  tempSize;
-
-                partialQuotient = quotient.val[quotient.val.size() - 1] / kUIntLimit;
                 remainder = quotient.val[quotient.val.size() - 1] % kUIntLimit;
-                quotient.val[quotient.val.size() - 1] = partialQuotient;
-                if (partialQuotient == 0ULL)
-                    quotient.val.pop_back();
-                tempSize = quotient.val.size();
-                for (size_t i = 0; i < tempSize; i++)
+                quotient.val.pop_back();
+                for (i = 0; i < quotient.val.size(); i++)
                 {
                     remainder *= kValStrParseLimit;
-                    remainder += quotient.val[tempSize - i - 1];
-                    quotient.val[tempSize - i - 1] = remainder / kUIntLimit;
-                    if (quotient.val[tempSize - i - 1] == 0U)
-                        quotient.val.pop_back();
+                    remainder += quotient.val[quotient.val.size() - i - 1];
+                    quotient.val[quotient.val.size() - i - 1] = remainder / kUIntLimit;
                     remainder %= kUIntLimit;
                 }
                 remainders.val.push_back(remainder);
+                quotient.val.push_back(0U);
+                if (!quotient.val.empty() && quotient.val[quotient.val.size() - 1] == 0U)
+                    quotient.val.pop_back();
                 if (quotient.val.empty())
                     quotient.val.push_back(0U);
             }
@@ -647,6 +745,11 @@ public:
             }
             else
             {
+                if (result.val[i] == 0U && i != 0)
+                {
+                    result.val.pop_back();
+                    i--;
+                }
                 if (isNegative)
                 {
                     if (result.val[i] > kIntLimit)
@@ -654,16 +757,6 @@ public:
                         result.val[i] -= kIntLimit;
                         result.val.push_back(0U);
                     }
-                    /*else if (result.val[i] == 0)
-                    {
-                        if (result.val[i - 1] >= kIntLimit)
-                            result.val[i - 1] -= kIntLimit;
-                        else
-                        {
-                            result.val[i - 1] *= -1;
-                            result.val.pop_back();
-                        }
-                    }*/
                     else
                         result.val[i] *= -1;
                 }
@@ -671,11 +764,6 @@ public:
                 {
                     if (result.val[i] >= kIntLimit)
                         result.val.push_back(0U);
-                    /*/else if (result.val[i] == 0U)
-                    {
-                        if (result.val[i - 1] < kIntLimit)
-                            result.val.pop_back();
-                    }*/
                 }
             }
             if (isOverflow)
@@ -749,7 +837,7 @@ public:
             }
             else
                 tempCarry = carry = isNegative ? -1 : 1;
-            result.val.push_back(val[i] + _val);
+            result.val.push_back(val[i] - _val);
 
             if (carry == 1)
             {
@@ -757,7 +845,7 @@ public:
                 {
                     result.val.push_back(val[i] + tempCarry);
                     tempCarry = 0;
-                    if (result.val[i] == 0U)
+                    if (val[i] > val[i] + tempCarry)
                         tempCarry = carry;
                 }
             }
@@ -767,7 +855,7 @@ public:
                 {
                     result.val.push_back(val[i] + tempCarry);
                     tempCarry = 0;
-                    if (result.val[i] == -1)
+                    if (val[i] < val[i] + tempCarry)
                         tempCarry = carry;
                 }
             }
@@ -785,6 +873,11 @@ public:
             }
             else
             {
+                if (result.val[i] == 0U && i != 0)
+                {
+                    result.val.pop_back();
+                    i--;
+                }
                 if (isNegative)
                 {
                     if (result.val[i] > kIntLimit)
@@ -792,28 +885,13 @@ public:
                         result.val[i] -= kIntLimit;
                         result.val.push_back(0U);
                     }
-                    /*/else if (result.val[i] == 0U)
-                    {
-                        if (result.val[i - 2] >= kIntLimit)
-                            result.val[i - 1] -= kIntLimit;
-                        else if (result.val[i - 2] < kIntLimit)
-                        {
-                            result.val[i - 2] *= -1;
-                            result.val.pop_back();
-                        }
-                    }*/
                     else
-                        result.val[i - 1] -= kIntLimit;
+                        result.val[i] -= kIntLimit;
                 }
                 else
                 {
-                    if (result.val[i - 1] >= kIntLimit)
+                    if (result.val[i] >= kIntLimit)
                         result.val.push_back(0U);
-                    /*else if (result.val[i - 1] == 0U)
-                    {
-                        if (result.val[i - 2] < kIntLimit)
-                            result.val.pop_back();
-                    }*/
                 }
                 if (isOverflow)
                     val.push_back(0U);
@@ -914,48 +992,69 @@ public:
                 _varNegative = true;
             }
         }
-
         if (varNegative != _varNegative)
         {
-            int tempCarry;
+            bool    is_varLarger;
+            size_t  tempIndex = 0;
 
-            if (val.size() >= _var.val.size())
+            if (val.size() > _var.val.size())
             {
-                for (; i < val.size() && i < _var.val.size(); i++)
-                {
-                    result.val.push_back(val[i] - _var.val[i] + carry);
-                    tempCarry = carry;
-                    carry = 0;
-                    if (val[i] <= val[i] - _var.val[i] + carry && _var.val[i] != 0U)
-                        carry = -1;
-                }
+                is_varLarger = false;
+                tempIndex = val.size() - 1;
+            }
+            else if (val.size() < _var.val.size())
+            {
+                is_varLarger = true;
+                tempIndex = _var.val.size() - 1;
             }
             else
             {
-                for (; i < val.size() && i < _var.val.size(); i++)
+                for (i = val.size() - 1; i > 0; i--)
                 {
-                    result.val.push_back(_var.val[i] - val[i] + carry);
-                    tempCarry = carry;
+                    if (val[i] != _var.val[i])
+                        break;
+                }
+                tempIndex = i;
+                if (val[i] < _var.val[i])
+                    is_varLarger = true;
+                else
+                    is_varLarger = false;
+            }
+            if (!is_varLarger)
+            {
+                for (i = 0; i < _var.val.size() && i <= tempIndex; i++)
+                {
+                    result.val.push_back(val[i] - _var.val[i] + carry);
                     carry = 0;
-                    if (_var.val[i] <= _var.val[i] - val[i] + carry && val[i] != 0U)
+                    if (_var.val[i] != 0U && val[i] <= val[i] - _var.val[i] + carry)
                         carry = -1;
                 }
+                for (; i < val.size(); i++)
+                {
+                    result.val.push_back(val[i] + carry);
+                    carry = 0;
+                    if (val[i] < val[i] + carry)
+                        carry = 1;
+                }
+                isNegative = varNegative;
             }
-            for (; i < val.size(); i++)
+            else
             {
-                result.val.push_back(val[i] + carry);
-                tempCarry = carry;
-                carry = 0;
-                if (val[i] < val[i] + carry)
-                    carry = -1;
-            }
-            for (; i < _var.val.size(); i++)
-            {
-                result.val.push_back(_var.val[i] + carry);
-                tempCarry = carry;
-                carry = 0;
-                if (_var.val[i] < _var.val[i] + carry)
-                    carry = -1;
+                for (i = 0; i < val.size() && i <= tempIndex; i++)
+                {
+                    result.val.push_back(_var.val[i] - val[i] + carry);
+                    carry = 0;
+                    if (val[i] != 0U && _var.val[i] <= _var.val[i] - val[i] + carry)
+                        carry = -1;
+                }
+                for (; i < _var.val.size(); i++)
+                {
+                    result.val.push_back(_var.val[i] + carry);
+                    carry = 0;
+                    if (_var.val[i] < _var.val[i] + carry)
+                        carry = -1;
+                }
+                isNegative = _varNegative;
             }
         }
         else
@@ -982,34 +1081,32 @@ public:
                     carry = 1;
             }
             if (carry != 0)
+            {
                 result.val.push_back(carry);
+                i++;
+            }
+            isNegative = varNegative;
         }
-
-        for (--i; i > 0; i--)
+        for (i = result.val.size() - 1; i > 0; i--)
         {
             if (result.val[i] != 0U)
                 break;
             result.val.pop_back();
         }
-        i = result.val.size() - 1;
-        if (val.size() >= _var.val.size())
-            isNegative = varNegative;
-        else
-            isNegative = _varNegative;
         if (!isNegative)
         {
-            if (result.val[i] >= kIntLimit && carry != -1)
+            if (result.val[result.val.size() - 1] >= kIntLimit && carry != -1)
                 result.val.push_back(0U);
         }
         else
         {
-            if (result.val[i] > kIntLimit && carry != -1)
+            if (result.val[result.val.size() - 1] > kIntLimit && carry != -1)
             {
-                result.val[i] -= kIntLimit;
+                result.val[result.val.size() - 1] -= kIntLimit;
                 result.val.push_back(0U);
             }
             else
-                result.val[i] *= -1;
+                result.val[result.val.size() - 1] *= -1;
         }
         if (varOverflow)
         {
@@ -1030,9 +1127,201 @@ public:
 
         return  result;
     };
-    ExRange& operator-(const ExRange _var)
+    ExRange operator-(ExRange& _var)
     {
+        ExRange<int>    result;
 
+        size_t  i = 0;
+
+        bool    isNegative = false;
+        bool    varNegative = false, varOverflow = false;
+        bool    _varNegative = false, _varOverflow = false;
+
+        int carry = 0;
+
+        if (val.size() > 1)
+        {
+            if (val[val.size() - 1] == 0U)
+            {
+                if (val[val.size() - 2] < kIntLimit)
+                {
+                    val[val.size() - 2] += kIntLimit;
+                    varNegative = true;
+                }
+                val.pop_back();
+                varOverflow = true;
+            }
+            else if (val[val.size() - 1] > kIntLimit)
+            {
+                val[val.size() - 1] *= -1;
+                varNegative = true;
+            }
+        }
+        else
+        {
+            if (val[i] >= kIntLimit)
+            {
+                val[i] *= -1;
+                varNegative = true;
+            }
+        }
+        if (_var.val.size() > 1)
+        {
+            if (_var.val[_var.val.size() - 1] == 0U)
+            {
+                if (_var.val[_var.val.size() - 2] < kIntLimit)
+                {
+                    _var.val[_var.val.size() - 2] += kIntLimit;
+                    _varNegative = true;
+                }
+                _var.val.pop_back();
+                _varOverflow = true;
+            }
+            else if (_var.val[_var.val.size() - 1] > kIntLimit)
+            {
+                _var.val[_var.val.size() - 1] *= -1;
+                _varNegative = true;
+            }
+        }
+        else
+        {
+            if (_var.val[i] >= kIntLimit)
+            {
+                _var.val[i] *= -1;
+                _varNegative = true;
+            }
+        }
+        if (varNegative != _varNegative)
+        {
+            for (i = 0; i < val.size() && i < _var.val.size(); i++)
+            {
+                result.val.push_back(val[i] + _var.val[i] + carry);
+                carry = 0;
+                if (val[i] >= val[i] + _var.val[i] + carry && _var.val[i] != 0U)
+                    carry = 1;
+            }
+            for (; i < val.size(); i++)
+            {
+                result.val.push_back(val[i] + carry);
+                carry = 0;
+                if (val[i] > val[i] + carry)
+                    carry = 1;
+            }
+            for (; i < _var.val.size(); i++)
+            {
+                result.val.push_back(_var.val[i] + carry);
+               carry = 0;
+                if (_var.val[i] > _var.val[i] + carry)
+                    carry = 1;
+            }
+            if (carry != 0U)
+                result.val.push_back(carry);
+            isNegative = varNegative;
+        }
+        else
+        {
+            bool    is_varLarger;
+            size_t  tempIndex = 0;
+
+            if (val.size() > _var.val.size())
+            {
+                is_varLarger = false;
+                tempIndex = val.size() - 1;
+            }
+            else if (val.size() < _var.val.size())
+            {
+                is_varLarger = true;
+                tempIndex = _var.val.size() - 1;
+            }
+            else
+            {
+                for (i = val.size() - 1; i > 0; i--)
+                {
+                    if (val[i] != _var.val[i])
+                        break;
+                }
+                tempIndex = i;
+                if (val[i] < _var.val[i])
+                    is_varLarger = true;
+                else
+                    is_varLarger = false;
+            }
+            if (!is_varLarger)
+            {
+                for (i = 0; i < _var.val.size() && i <= tempIndex; i++)
+                {
+                    result.val.push_back(val[i] - _var.val[i] + carry);
+                    carry = 0;
+                    if (_var.val[i] != 0U && val[i] <= val[i] - _var.val[i] + carry)
+                        carry = -1;
+                }
+                for (; i < val.size(); i++)
+                {
+                    result.val.push_back(val[i] + carry);
+                    carry = 0;
+                    if (val[i] < val[i] + carry)
+                        carry = 1;
+                }
+                isNegative = varNegative;
+            }
+            else
+            {
+                for (i = 0; i < val.size() && i <= tempIndex; i++)
+                {
+                    result.val.push_back(_var.val[i] - val[i] + carry);
+                    carry = 0;
+                    if (val[i] != 0U && _var.val[i] <= _var.val[i] - val[i] + carry)
+                        carry = -1;
+                }
+                for (; i < _var.val.size(); i++)
+                {
+                    result.val.push_back(_var.val[i] + carry);
+                    carry = 0;
+                    if (_var.val[i] < _var.val[i] + carry)
+                        carry = -1;
+                }
+                isNegative = _varNegative;
+            }
+        }
+        for (--i; i > 0; i--)
+        {
+            if (result.val[i] != 0U)
+                break;
+            result.val.pop_back();
+        }
+        if (!isNegative)
+        {
+            if (result.val[result.val.size() - 1] >= kIntLimit)
+                result.val.push_back(0U);
+        }
+        else
+        {
+            if (result.val[result.val.size() - 1] > kIntLimit)
+            {
+                result.val[result.val.size() - 1] -= kIntLimit;
+                result.val.push_back(0U);
+            }
+            else
+                result.val[result.val.size() - 1] *= -1;
+        }
+        if (varOverflow)
+        {
+            if (varNegative)
+                val[val.size() - 1] -= kIntLimit;
+            val.push_back(0U);
+        }
+        else if (varNegative)
+            val[val.size() - 1] *= -1;
+        if (_varOverflow)
+        {
+            if (_varNegative)
+                _var.val[_var.val.size() - 1] -= kIntLimit;
+            _var.val.push_back(0U);
+        }
+        else if (_varNegative)
+            _var.val[_var.val.size() - 1] *= -1;
+
+        return  result;
     };
 
     bool    operator==(int _val)
@@ -1096,4 +1385,17 @@ public:
 
         return  false;
     };
+};
+
+template<>
+class ExRange<double>
+{
+private:
+    vector<double> val;
+public:
+    ExRange();
+    ExRange(double _val);
+    ExRange(const string& _valStr);
+
+    ExRange& operator=(const string& _valStr);
 };
