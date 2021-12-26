@@ -9,8 +9,6 @@ const unsigned int  kIntLimit = 2147483648U;
 const unsigned int  kValStrParseLimit = 100000000U;
 const unsigned int  kValStrParseLimitDigitNum = 8U;
 
-
-
 string uitos(unsigned int _val)
 {
     string  resultStr;
@@ -35,10 +33,6 @@ string uitos(unsigned int _val)
 
     return  resultStr;
 }
-
-namespace exRange
-{
-};
 
 template<typename T>
 class ExRange
@@ -148,7 +142,7 @@ public:
 };
 
 template<>
-class ExRange<int>
+class ExRange<int> 
 {
 private:
     vector<unsigned int>    val;
@@ -219,7 +213,6 @@ public:
                     remainder %= kUIntLimit;
                 }
                 remainders.val.push_back(remainder);
-                    quotient.val.push_back(0U);
                 if (!quotient.val.empty() && quotient.val[quotient.val.size() - 1] == 0U)
                     quotient.val.pop_back();
                 if (quotient.val.empty())
@@ -457,7 +450,7 @@ public:
             }
             for (i = _valStr.size() - 1; i > 0; i--)
             {
-                if (_valStr[i] >= '0' && _valStr[i] <= '9')
+                if (isdigit(_valStr[i]))
                 {
                     if (j % kValStrParseLimitDigitNum == 0)
                     {
@@ -490,7 +483,6 @@ public:
                     remainder %= kUIntLimit;
                 }
                 remainders.val.push_back(remainder);
-                quotient.val.push_back(0U);
                 if (!quotient.val.empty() && quotient.val[quotient.val.size() - 1] == 0U)
                     quotient.val.pop_back();
                 if (quotient.val.empty())
@@ -526,7 +518,7 @@ public:
     ExRange operator*(int _val)
     {
         ExRange result;
-
+        
         size_t  i = 0;
 
         bool    valNegative = false;
@@ -572,34 +564,22 @@ public:
                 result.val.push_back(mul % kUIntLimit);
                 carry = mul / kUIntLimit;
             }
-            i--;
-            if (carry != 0)
+			if (carry != 0U)
+				result.val.push_back(carry);
+            if (isNegative)
             {
-                if (isNegative)
-                    result.val.push_back(-1 * carry);
+                if (result.val[result.val.size() - 1] > kIntLimit)
+                {
+                    result.val[result.val.size() - 1] -= kIntLimit;
+                    result.val.push_back(0U);
+                }
                 else
-                    result.val.push_back(carry);
+                    result.val[result.val.size() - 1] *= -1;
             }
             else
             {
-                if (result.val[i] >= kIntLimit)
-                {
-                    if (isNegative)
-                    {
-                        if (result.val[i] != kIntLimit)
-                        {
-                            result.val[i] -= kIntLimit;
-                            result.val.push_back(0U);
-                        }
-                    }
-                    else
-                        result.val.push_back(0U);
-                }
-                else
-                {
-                    if (isNegative)
-                        result.val[i] *= -1;
-                }
+                if (result.val[result.val.size() - 1] >= kIntLimit)
+                    result.val.push_back(0U);
             }
             if (isOverFlow)
             {
@@ -648,6 +628,35 @@ public:
     };
     ExRange& operator/(int _val)
     {
+        bool    isNegative = false;
+
+        if (val.size() >= 2)
+        {
+            if (val[val.size() - 1] == 0U)
+            {
+                if (val[val.size() - 2] < kIntLimit)
+                {
+                    isNegative = true;
+                    val[val.size() - 2] += kIntLimit;
+                }
+                val.pop_back();
+            }
+            else
+            {
+                if (val[val.size() - 1] >= kIntLimit)
+                    isNegative = true;
+            }
+        }
+        else
+        {
+            if (val[val.size() - 1] < kIntLimit)
+                isNegative = true;
+        }
+        if (_val < 0)
+            isNegative = !isNegative;
+
+        unsigned long long  partialQuotient = val[val.size() - 1] / _val;
+
 
     };
     ExRange& operator%(int _val)
@@ -925,6 +934,18 @@ public:
         }
 
         return  result;
+    };
+    friend ExRange operator*(const int& val1, ExRange& val2)
+    {
+        return  ExRange<int>(val2 * val1);
+    };
+    friend ExRange operator+(const int& val1, ExRange& val2)
+    {
+        return  ExRange<int>(val2 + val1);
+    };
+    friend ExRange operator-(const int& val1, const ExRange& val2)
+    {
+
     };
     ExRange& operator*(const ExRange& _var);
     ExRange& operator/(const ExRange& _var);
