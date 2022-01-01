@@ -43,7 +43,7 @@ string* parse(const string& str)
 {
 	size_t	i = 0;
 	string* vals = new string[2];
-	
+
 	if (str[0] == '-')
 	{
 		vals[0] += '-';
@@ -101,12 +101,12 @@ string	parse(const string& str, int* val2Ptr)
 
 int main(int argc, char* argv[])
 {
-	/*ExRange<int>	val1("-154561122806807139031550456192042954");
+	/*ExRange<int>	val1("18446744073709551616");
 	//ExRange<int>	val2("-94125314862");
-	int	val2 = 38814;
+	int	val2 = 2147483647;
 	ExRange<int>	result;
 
-	result = val1 * val2;
+	result = val1 / val2;
 
 	cout << ExRange<int>::decode(result) << endl;*/
 
@@ -137,7 +137,7 @@ int main(int argc, char* argv[])
 
 		// delete[] vals;
 	}*/
-	ifstream	iFile;
+	ifstream	iFileOpen, iFile;
 	ofstream	oFile;
 
 	string	fileName;
@@ -147,53 +147,52 @@ int main(int argc, char* argv[])
 	{
 		cout << "Input the file location : ";
 		cin >> fileName;
-		iFile.open(fileName);
+		iFileOpen.open(fileName);
 		fileName.clear();
 	}
 	else if (argc == 2)
-	{
-		iFile.open(argv[1]);
-		oFile.open(argv[1]);
-	}
-	if (iFile.fail())
+		iFileOpen.open(argv[1]);
+	if (iFileOpen.fail())
 	{
 		cout << "Error : Can't open file." << endl;
 		return	0;
 	}
-	fileName += itos(index++);
-	fileName += ".txt";
-	oFile.open(".\\" + fileName, ios_base::out);
+	fileName = itos(index++);
+	iFile.open(fileName + ".txt");
 
-	while (!oFile.fail() && index != 2147483648)
+	while (!iFile.fail() && index != 2147483648)
 	{
-		fileName.clear();
-		fileName += itos(index++);
-		fileName += ".txt";
+		iFile.close();
+		fileName = itos(index++);
 
-		oFile.open(".\\" + fileName, ios_base::out);
+		iFile.open(fileName + ".txt");
 	}
+	oFile.open(fileName + ".txt");
 
-	while (!iFile.eof())
+	while (!iFileOpen.eof())
 	{
 		char	str[256];
 		string* valStrs;
 		string	resultStr;
 
-		iFile.getline(str, 256);
+		iFileOpen.getline(str, 256);
 
 		valStrs = parse(string(str));
-		ExRange<int>	val1(valStrs[0]), val2(valStrs[1]);
+		//ExRange<int>	val1(valStrs[0]), val2(valStrs[1]);
+		ExRange<int>	val1(valStrs[0]);
+		int	val2 = atoi(valStrs[1].c_str());
 		ExRange<int>	result;
 
-		result = val1 + val2;
-		resultStr = ExRange<int>::decode(result);
+		result = val1 * val2;
+		resultStr = ExRange<int>::decode(result) + '\n';
 		oFile.write(resultStr.c_str(), resultStr.size());
-		cout << resultStr << endl;
+		cout << resultStr;
 
 		delete[]	valStrs;
 	}
 
 	iFile.close();
+	iFileOpen.close();
 	oFile.close();
 
 	return	0;
