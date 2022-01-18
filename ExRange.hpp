@@ -1,3 +1,4 @@
+#include    <iostream>
 #include    <vector>
 #include    <string>
 
@@ -34,6 +35,7 @@ string uitos(unsigned int _val)
     return  resultStr;
 }
 
+
 template<typename T>
 class ExRange
 {
@@ -65,28 +67,28 @@ public:
     };
     ExRange(int&& _val)
     {
-        if (_val > 0)
+        if (_val >= 0)
         {
             val.push_back(_val);
-            isNegative = true;
+            isNegative = false;
         }
         else
         {
             val.push_back(_val * -1);
-            isNegative = false;
+            isNegative = true;
         }
     }
     ExRange(int& _val)
     {
-        if (_val > 0)
+        if (_val >= 0)
         {
             val.push_back(_val);
-            isNegative = true;
+            isNegative = false;
         }
         else
         {
             val.push_back(_val * -1);
-            isNegative = false;
+            isNegative = true;
         }
     };
     ExRange(const ExRange& _var)
@@ -165,6 +167,8 @@ public:
     };
     ExRange operator=(const ExRange& _var)
     {
+        val.clear();
+
         for (size_t i = 0; i < _var.val.size(); i++)
             val.push_back(_var.val[i]);
         isNegative = _var.isNegative;
@@ -176,7 +180,7 @@ public:
         size_t  i = 0;
         size_t  j = 0;
 
-        ExRange<int>    quotient, remainders;
+        ExRange<int>    quotient;
         unsigned long long  partialQuotient = 0ULL;
         unsigned long long  tempPartialQuotient = 0ULL;
         unsigned long long  remainder = 0ULL;
@@ -184,6 +188,8 @@ public:
         int sign = 1;
 
         int mul = 1;
+
+        val.clear();
 
         if (!_valStr.empty())
         {
@@ -226,19 +232,34 @@ public:
                     quotient.val[quotient.val.size() - i - 1] = remainder / kUIntLimit;
                     remainder %= kUIntLimit;
                 }
-                remainders.val.push_back(remainder);
+                val.push_back(remainder);
                 if (!quotient.val.empty() && quotient.val[quotient.val.size() - 1] == 0U)
                     quotient.val.pop_back();
                 if (quotient.val.empty())
                     quotient.val.push_back(0U);
             }
-            if (remainders.val.empty())
-                remainders.val.push_back(0U);
-            val = remainders.val;
+            if (val.empty())
+                val.push_back(0U);
         }
 
         return  *this;
     };
+
+    /*ExRange& split(size_t firstIndex, size_t lastIndex)
+    {
+        ExRange<int>    result;
+
+        try
+        {
+            for (size_t i = firstIndex; i <= lastIndex; i++)
+                result.val.push_back(val[i]);
+            return  result;
+        }
+        catch (size_t index)
+        {
+            throw out_of_range("Error : Out of the range");  
+        } 
+    };*/
 
     ExRange operator*(int _val)
     {
@@ -276,9 +297,8 @@ public:
     {
         ExRange<int>    result;
 
-        size_t  i;
+        size_t  i = val.size() - 1;
 
-        unsigned long long    partialQuotient;
         unsigned long long    remainder = 0ULL;
 
         result.isNegative = isNegative;
@@ -297,14 +317,18 @@ public:
             cout << "Error : Cannot be divided by zero." << endl;
         }
         
-        partialQuotient = val[val.size() - 1] / _val;
-        if(partialQuotient != 0)
-            result.val.resize(val.size());
-        else
-            result.val.resize(val.size() - 1);
-        remainder = val[val.size() - 1] % _val;
-        remainder *= kUIntLimit;
-        for(i = result.val.size() - 1; i > 0; i--)
+        result.val.resize(i + 1);
+        if(val.size() > 1)
+        {
+            if(val[i] < _val)
+            {
+                result.val.resize(i);
+                remainder = val[i];
+                remainder *= kUIntLimit;
+                i--;
+            }
+        }
+        for(; i > 0; i--)
         {
             remainder += val[i];
             result.val[i] = remainder / _val;
@@ -319,9 +343,9 @@ public:
 
     ExRange operator%(int _val)
     {
-        ExRange<int>    result;
+        unsigned long long  remainder = 0ULL;
 
-        return  result;
+        return  ExRange<int>(remainder);
     };
 
     ExRange operator+(int _val)
@@ -337,29 +361,28 @@ public:
             if(_val < 0)
                 _val *= -1;
             result.val.push_back(val[i] - _val);
+            result.isNegative = isNegative;
             if (val[i] < result.val[i])
             {
                 if(val.size() == 1)
-                    result.val[i] *= -1;
-                result.isNegative = !isNegative;
-                carry = -1;
-            }
-            else
-                result.isNegative = isNegative;
-            for (i++; i < val.size() - 1; i++)
-            {
-                result.val.push_back(val[i] + carry); // -1 + 3 = 2 -> 1 - 3 = -2
-                carry = 0;
-                if (result.val[i] == 0U && val[i] != 0U)
                 {
                     result.val[i] *= -1;
-                    carry = -1;
+                    result.isNegative = !isNegative;
                 }
+                carry = -1;
+            }
+            for (i++; i < val.size() - 1; i++)
+            {
+                result.val.push_back(val[i] + carry); // -1 + 3 = 2 -> 1 - 3 = -2 // - | 2 | 3 + 5 ->  2 | 3 - 5 // 2 | 3 - 5 -> 2 |
+                carry = 0;
+                if (val[i] < result.val[i])
+                    carry = -1;
             }
             if (i == val.size() - 1)
             {
                 result.val.push_back(val[i] + carry);
-                result.isNegative = isNegative;
+                if(result.val[i] == 0U)
+                    result.val.pop_back();
             }
         }
         else
@@ -401,7 +424,7 @@ public:
             if (_val < 0)
                 _val *= -1;
             result.val.push_back(val[i] + _val);
-            if (val[i] > val[i] + _val)
+            if (val[i] > result.val[i])
                 carry = 1;
             for (i++; i < val.size(); i++)
             {
@@ -416,39 +439,358 @@ public:
         }
         else
         {
-            if (_val != 0 && _val != kIntLimit)
+            if (_val != 0)
             {
                 if (_val < 0)
                     _val *= -1;
                 result.val.push_back(val[i] - _val);
             }
-            else if (_val == kIntLimit)
-                result.val.push_back(val[i] + _val);
-            else if(_val == 0)
+            else
                 return  *this;
+            result.isNegative = isNegative;
             if (val[i] < result.val[i])
             {
                 if(val.size() == 1)
+                {
                     result.val[i] *= -1;
-                result.isNegative = !isNegative;
+                    result.isNegative = !isNegative;
+                }
                 carry = -1;
             }
-            else
-                result.isNegative = isNegative;
             for (i++; i < val.size(); i++)
             {
                 result.val.push_back(val[i] + carry);
                 carry = 0;
-                if (val[i] > result.val[i])
-                {
-                    result.val[i] *= -1;
+                if (val[i] < result.val[i])
                     carry = -1;
-                }
             }
             if (i == val.size() - 1)
             {
                 result.val.push_back(val[i] + carry);
+                if(result.val[i] == 0U)
+                    result.val.pop_back();
                 result.isNegative = isNegative;
+            }
+        }
+
+        return  result;
+    };
+    ExRange operator*(const ExRange& _var)
+    {
+        ExRange<int>    result;
+        ExRange<int>    z0, z1, z2;
+
+        struct parsedStrs
+        {
+            size_t  startIndex, size;
+            parsedStrs*   parent, *current, *prev;
+            parsedStrs*   left;
+            parsedStrs*   right;
+            parsedStrs()
+            {
+                size = 0;
+                startIndex = 0;
+                parent = nullptr;
+                prev = nullptr;
+                left = nullptr;
+                right = nullptr;
+            };
+            parsedStrs(const ExRange& _var)
+            {
+                size = _var.val.size();
+                current = this;
+
+                while(current != nullptr)
+                {
+                    if(prev == current->parent && size > 50)
+                    {
+                        prev = current;
+                        left = new parsedStrs();
+                        right = new parsedStrs();
+                        left->parent = right->parent = current;
+                        left->size = right->size = size / 2;
+                        if(size % 2 == 1)
+                            right->size++;
+                        size /= 2;
+                        current->startIndex = startIndex;
+                        current = left;
+                    }
+                    else
+                    {
+                        if(prev == current->parent)
+                        {
+                            prev = current;
+                            current->startIndex = startIndex;
+                            startIndex += size;
+                            current = current->parent;
+                        }
+                        else if(prev == current->left)
+                        {
+                            prev = current;
+                            current = current->right;
+                        }
+                        else if(prev == current->right)
+                        {
+                            prev = current;
+                            size = current->size;
+                            current = current->parent;
+                        }
+                    }
+                }
+            };
+            unsigned int&   operator[](size_t index)
+            {
+                
+            };
+            ~parsedStrs()
+            {
+
+            };
+        };
+
+        size_t  i, j;
+
+        unsigned long long  mul;
+        unsigned int    carry = 0U;
+
+         if(_var == 0)
+            return  ExRange(0);
+        result.isNegative = (_var < 0) ? !isNegative : isNegative;
+        if(val.size() > 50 && _var.val.size() > 50)
+        {
+            parsedStrs    a(*this), b(_var);
+        }
+        else
+        {
+            for (i = 0; i < val.size(); i++)
+            {
+                carry = 0U;
+
+                for (j = 0; i < _var.val.size(); j++)
+                {
+                    mul = (unsigned long long)val[i] * (unsigned long long)_var.val[i] + carry;
+                    carry = mul / kUIntLimit;
+                    mul %= kUIntLimit;
+                    if (i + j == result.val.size())
+                        result.val.push_back(0U);
+                    if (mul + result.val[i + j] >= kUIntLimit)
+                    {
+                        carry++;
+                        result.val[i + j] = (mul + result.val[i + j]) - kUIntLimit;
+                    }
+                    else
+                        result.val[i + j] += mul;
+                }
+                if (carry != 0U)
+                    result.val.push_back(carry);
+            }
+        }
+
+        return  result;
+    };
+    ExRange operator/(const ExRange& _var)
+    {
+        ExRange<int>    result;
+
+        return  result;
+    };
+    ExRange operator+(const ExRange& _var)
+    {
+        ExRange<int>    result;
+
+        size_t  i;
+
+        int carry = 0;
+
+        if(isNegative != _var.isNegative)
+        {
+            bool    isValLarger;
+
+            if(val.size() > _var.val.size())
+                isValLarger = true;
+            else if(val.size() < _var.val.size())
+                isValLarger = false;
+            else
+            {
+                for (i = val.size() - 1; i > 0; i--)
+                {
+                    if (val[i] != _var.val[i])
+                        break;
+                }
+                isValLarger = (val[i] > _var.val[i]) ? true : false;
+            }
+            if (!isValLarger)
+            {
+                for (i = 0; i < val.size(); i++)
+                {
+                    result.val.push_back(_var.val[i] - val[i] + carry); // 0 - 0 - 1 // 3 - kU-1 - 1 // 9 8 9 8 - 0 9 9 9
+                    carry = 0;
+                    if ((_var.val[i] < result.val[i] || val[i] != 0U) && _var.val[i] <= result.val[i])
+                        carry = -1;
+                }
+                for(; i < _var.val.size(); i++)
+                {
+                    result.val.push_back(_var.val[i] + carry);
+                    carry = 0;
+                    if(_var.val[i] < result.val[i])
+                        carry = -1;
+                }
+                result.isNegative = _var.isNegative;
+            }
+            else
+            {
+                for (i = 0; i < _var.val.size(); i++)
+                {
+                    result.val.push_back(val[i] - _var.val[i] + carry); // 0 - 0 - 1 = kU-1 // 3 - kU-1 - 1 = 3 // 3 - 0 - 0 = 3
+                    carry = 0;
+                    if ((val[i] < result.val[i] || _var.val[i] != 0U) && val[i] <= result.val[i])
+                        carry = -1;
+                }
+                for(; i < val.size(); i++)
+                {
+                    result.val.push_back(val[i] + carry);
+                    carry = 0;
+                    if(val[i] < result.val[i])
+                        carry = -1;
+                }
+                result.isNegative = isNegative;
+            }
+            for(i = result.val.size() - 1; i > 0; i--)
+            {
+                if(result.val[i] == 0U)
+                {
+                    result.val.pop_back();
+                    continue;
+                }
+                break;
+            }
+        }
+        else
+        {
+            for(i = 0; i < val.size() && i < _var.val.size(); i++)
+            {
+                result.val.push_back(val[i] + _var.val[i] + carry);
+                carry = 0;
+                if((val[i] > result.val[i] || _var.val[i] != 0U) && val[i] >= result.val[i])
+                    carry = 1;
+            }
+            for(; i < val.size(); i++)
+            {
+                result.val.push_back(val[i] + carry);
+                carry = 0;
+                if(val[i] > result.val[i])
+                    carry = 1;
+            }
+            for(; i < _var.val.size(); i++)
+            {
+                result.val.push_back(_var.val[i] + carry);
+                carry = 0;
+                if(_var.val[i] > result.val[i])
+                    carry = 1;
+            }
+            if(carry != 0)
+                result.val.push_back(carry);
+            result.isNegative = isNegative;
+        }
+
+        return  result;
+    };
+    ExRange operator-(const ExRange& _var)
+    {
+        ExRange<int>    result;
+
+        size_t  i;
+
+        int carry = 0;
+
+        if(isNegative != _var.isNegative)
+        {
+            for(i = 0; i < val.size() && i < _var.val.size(); i++)
+            {
+                result.val.push_back(val[i] + _var.val[i] + carry);
+                carry = 0;
+                if((val[i] > result.val[i] || _var.val[i] != 0U) && val[i] >= result.val[i])
+                    carry = 1;
+            }
+            for(; i < val.size(); i++)
+            {
+                result.val.push_back(val[i] + carry);
+                carry = 0;
+                if(val[i] > result.val[i])
+                    carry = 1;
+            }
+            for(; i < _var.val.size(); i++)
+            {
+                result.val.push_back(_var.val[i] + carry);
+                carry = 0;
+                if(_var.val[i] > result.val[i])
+                    carry = 1;
+            }
+            if(carry != 0)
+                result.val.push_back(carry);
+            result.isNegative;
+        }
+        else
+        {
+            bool    isValLarger;
+
+            if(val.size() > _var.val.size())
+                isValLarger = true;
+            else if(val.size() < _var.val.size())
+                isValLarger = false;
+            else
+            {
+                for (i = val.size() - 1; i > 0; i--)
+                {
+                    if (val[i] != _var.val[i])
+                        break;
+                }
+                isValLarger = (val[i] > _var.val[i]) ? true : false;
+            }
+            if (!isValLarger)
+            {
+                for (i = 0; i < val.size(); i++)
+                {
+                    result.val.push_back(_var.val[i] - val[i] + carry); // 0 - 0 - 1 // 3 - kU-1 - 1
+                    carry = 0;
+                    if ((_var.val[i] < result.val[i] || val[i] != 0U) && _var.val[i] <= result.val[i])
+                        carry = -1;
+                }
+                for(; i < _var.val.size(); i++)
+                {
+                    result.val.push_back(_var.val[i] + carry);
+                    carry = 0;
+                    if(_var.val[i] < result.val[i])
+                        carry = -1;
+                }
+                result.isNegative = !_var.isNegative;
+            }
+            else
+            {
+                for (i = 0; i < _var.val.size(); i++)
+                {
+                    result.val.push_back(val[i] - _var.val[i] + carry); // 0 - 0 - 1 = kU-1 // 3 - kU-1 - 1 = 3 // 3 - 0 - 0 = 3
+                    carry = 0;
+                    if ((val[i] < result.val[i] || _var.val[i] != 0U) && val[i] <= result.val[i])
+                        carry = -1;
+                }
+                for(; i < val.size(); i++)
+                {
+                    result.val.push_back(val[i] + carry);
+                    carry = 0;
+                    if(val[i] < result.val[i])
+                        carry = -1;
+                }
+                result.isNegative = isNegative;
+            }
+            for(i = result.val.size() - 1; i > 0; i--)
+            {
+                if(result.val[i] == 0U)
+                {
+                    result.val.pop_back();
+                    continue;
+                }
+                break;
             }
         }
 
@@ -572,7 +914,40 @@ public:
         return  resultStr;
     };
 
-    bool    operator==(int _val)
+    ExRange&    operator*=(int _val)
+    {
+        size_t  i = 0;
+
+        unsigned long long  mul;
+        unsigned int    carry = 0U;
+        unsigned int    tempVal = 0;
+
+        isNegative = isNegative;
+        if(_val == 0)
+        {
+            isNegative = false;
+            val.clear();
+        }
+        else if (_val < 0)
+        {
+            _val *= -1;
+            isNegative = !isNegative;
+        }
+        if(_val == 1)
+            return  *this;
+        for (; i < val.size(); i++)
+        {
+            mul = (unsigned long long)val[i] * _val + carry;
+            val[i] = mul % kUIntLimit;
+            carry = mul / kUIntLimit;
+        }
+        if (carry != 0U)
+            val.push_back(carry);
+
+        return  *this;
+    };
+
+    bool    operator==(int _val) const
     {
         /*if (val.size() > 2)
             return  false;
@@ -614,7 +989,7 @@ public:
         else
             return  false;
     };
-    bool    operator!=(int _val)
+    bool    operator!=(int _val) const
     {
         /*if (val.size() > 2)
             return  true;
@@ -656,6 +1031,61 @@ public:
         else
             return  false;
     };
+    bool    operator>(int _val) const
+    {
+        if(val.size() > 1)
+        {
+            if(!isNegative)
+                return  true;
+            else
+                return  false;
+        }
+        else if(val.size() == 1)
+        {
+            if(!isNegative)
+            {
+                if(_val < 0)
+                    return  true;
+                else if(val[0] <= _val)
+                    return  false;
+                else
+                    return  true;
+            }
+            else
+            {
+                if(_val > 0)
+                    return  false;
+                else
+                {
+                    _val *= -1;
+                    if(val[0] < _val)
+                        return  true;
+                    else
+                        return  false;
+                }
+            }
+        }
+    };
+    bool    operator<(int _val) const
+    {
+        if(val.size() > 1)
+        {
+            if(!isNegative)
+                return  false;
+            else
+                return  true;
+        }
+
+        return  false;
+    };
+    bool    operator>=(int _val) const;
+    bool    operator<=(int _val) const;
+};
+
+template<>
+class ExRange<float>
+{
+
 };
 
 template<>

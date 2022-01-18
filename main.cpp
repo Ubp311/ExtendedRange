@@ -101,9 +101,9 @@ string	parse(const string& str, int* val2Ptr)
 
 int main(int argc, char* argv[])
 {
-	/*ExRange<int>	val1("18446744073709551616");
+	/*ExRange<int>	val1("7");
 	//ExRange<int>	val2("-94125314862");
-	int	val2 = 2147483647;
+	int	val2 = -97593;
 	ExRange<int>	result;
 
 	result = val1 / val2;
@@ -137,10 +137,11 @@ int main(int argc, char* argv[])
 
 		// delete[] vals;
 	}*/
-	ifstream	iFileOpen, iFile;
+	/*ifstream	iFileOpen, iFile;
 	ofstream	oFile;
 
 	string	fileName;
+
 	int	index = 1;
 
 	if (argc == 1)
@@ -183,7 +184,7 @@ int main(int argc, char* argv[])
 		int	val2 = atoi(valStrs[1].c_str());
 		ExRange<int>	result;
 
-		result = val1 * val2;
+		result = val1 / val2;
 		resultStr = ExRange<int>::decode(result) + '\n';
 		oFile.write(resultStr.c_str(), resultStr.size());
 		cout << resultStr;
@@ -193,7 +194,13 @@ int main(int argc, char* argv[])
 
 	iFile.close();
 	iFileOpen.close();
-	oFile.close();
+	oFile.close();*/
+
+	ExRange<int>	val(1);
+
+	for(int i = 1; i <= 100; i++)
+		val *= i;
+	cout << ExRange<int>::decode(val) << endl;
 
 	return	0;
 
