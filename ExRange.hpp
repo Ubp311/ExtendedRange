@@ -102,7 +102,7 @@ public:
         size_t  i = 0;
         size_t  j = 0;
 
-        ExRange<int>    quotient, remainders;
+        ExRange<int>    quotient;
         unsigned long long  partialQuotient = 0ULL;
         unsigned long long  tempPartialQuotient = 0ULL;
         unsigned long long  remainder = 0ULL;
@@ -154,15 +154,14 @@ public:
                     quotient.val[quotient.val.size() - i - 1] = remainder / kUIntLimit;
                     remainder %= kUIntLimit;
                 }
-                remainders.val.push_back(remainder);
+                val.push_back(remainder);
                 if (!quotient.val.empty() && quotient.val[quotient.val.size() - 1] == 0U)
                     quotient.val.pop_back();
                 if (quotient.val.empty())
                     quotient.val.push_back(0U);
             }
-            if (remainders.val.empty())
-                remainders.val.push_back(0U);
-            val = remainders.val;
+            if (val.empty())
+                val.push_back(0U);
         }
     };
     ExRange operator=(const ExRange& _var)
@@ -244,6 +243,16 @@ public:
 
         return  *this;
     };
+
+    unsigned int&   operator[](size_t index)
+    {
+        return  val[index];
+    };
+
+    size_t  getSize()
+    {
+        return  val.size();
+    }
 
     /*ExRange& split(size_t firstIndex, size_t lastIndex)
     {
@@ -805,7 +814,7 @@ public:
         const unsigned int  base[2] = { kUIntLimit % kValStrParseLimit, kUIntLimit / kValStrParseLimit };
         ExRange<int>    mul(1);
         ExRange<int>    tempMul(0);
-        ExRange<int>    result(0);
+        ExRange<int>    result;
 
         unsigned int    vals[2];
 

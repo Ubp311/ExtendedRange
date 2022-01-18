@@ -137,7 +137,7 @@ int main(int argc, char* argv[])
 
 		// delete[] vals;
 	}*/
-	/*ifstream	iFileOpen, iFile;
+	ifstream	iFileOpen, iFile;
 	ofstream	oFile;
 
 	string	fileName;
@@ -181,10 +181,11 @@ int main(int argc, char* argv[])
 		valStrs = parse(string(str));
 		//ExRange<int>	val1(valStrs[0]), val2(valStrs[1]);
 		ExRange<int>	val1(valStrs[0]);
+		ExRange<int>	val2(valStrs[1]);
 		int	val2 = atoi(valStrs[1].c_str());
 		ExRange<int>	result;
 
-		result = val1 / val2;
+		result = val1 + val2;
 		resultStr = ExRange<int>::decode(result) + '\n';
 		oFile.write(resultStr.c_str(), resultStr.size());
 		cout << resultStr;
@@ -194,13 +195,15 @@ int main(int argc, char* argv[])
 
 	iFile.close();
 	iFileOpen.close();
-	oFile.close();*/
+	oFile.close();
 
-	ExRange<int>	val(1);
+	/*ExRange<int>	val(1);
 
-	for(int i = 1; i <= 100; i++)
-		val *= i;
-	cout << ExRange<int>::decode(val) << endl;
+	for(int i = 1; i <= 300; i++)
+		val = val * i;
+	for(int i = 0; i < val.getSize(); i++)
+		cout << val[i] << ", ";
+	cout << endl;*/
 
 	return	0;
 
