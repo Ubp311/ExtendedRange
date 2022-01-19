@@ -830,8 +830,7 @@ public:
             for (j = 0; j < mul.val.size(); j++)
             {
                 unsigned long long  tempMul;
-                carry = tempCarry;
-                tempCarry = 0U;
+                carry = 0U;
 
                 for (k = 0; k < 2; k++)
                 {
@@ -851,7 +850,10 @@ public:
                         if (result.val[j + k] >= kValStrParseLimit)
                         {
                             result.val[j + k] %= kValStrParseLimit;
-                            tempCarry = 1U;
+                            if(j + k + 1 >= result.val.size())
+                                result.val.push_back(1U);
+                            else
+                                result.val[j + k + 1]++;
                         }
                     }
                     else

@@ -101,12 +101,11 @@ string	parse(const string& str, int* val2Ptr)
 
 int main(int argc, char* argv[])
 {
-	/*ExRange<int>	val1("7");
-	//ExRange<int>	val2("-94125314862");
-	int	val2 = -97593;
+	/*ExRange<int>	val1("-239089348398016723861817124424181060870327751887526772462589533015402653459369");
+	ExRange<int>	val2("-9322618723883548375472698183752266061003163");
 	ExRange<int>	result;
 
-	result = val1 / val2;
+	result = val1 + val2;
 
 	cout << ExRange<int>::decode(result) << endl;*/
 
@@ -172,17 +171,17 @@ int main(int argc, char* argv[])
 
 	while (!iFileOpen.eof())
 	{
-		char	str[256];
+		string	str;
 		string* valStrs;
 		string	resultStr;
 
-		iFileOpen.getline(str, 256);
+		getline(iFileOpen, str);
 
-		valStrs = parse(string(str));
+		valStrs = parse(str);
 		//ExRange<int>	val1(valStrs[0]), val2(valStrs[1]);
 		ExRange<int>	val1(valStrs[0]);
 		ExRange<int>	val2(valStrs[1]);
-		int	val2 = atoi(valStrs[1].c_str());
+		//int	val2 = atoi(valStrs[1].c_str());
 		ExRange<int>	result;
 
 		result = val1 + val2;
