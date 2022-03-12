@@ -35,7 +35,6 @@ string uitos(unsigned int _val)
     return  resultStr;
 }
 
-
 template<typename T>
 class ExRange
 {
@@ -60,6 +59,7 @@ class ExRange<int>
 private:
     vector<unsigned int>    val;
     bool    isNegative;
+    
 public:
     ExRange()
     {
@@ -252,6 +252,16 @@ public:
     size_t  getSize()
     {
         return  val.size();
+    };
+
+    void    pushBack(unsigned int& _val)
+    {
+        val.push_back(_val);
+    };
+
+    void    popBack()
+    {
+        val.pop_back();
     }
 
     /*ExRange& split(size_t firstIndex, size_t lastIndex)
@@ -321,22 +331,12 @@ public:
                 result.isNegative = !isNegative;
             }
         }
-        catch(int expn)
+        catch(const exception& e)
         {
-            cout << "Error : Cannot be divided by zero." << endl;
+            cerr << e.what() << endl;
         }
         
         result.val.resize(i + 1);
-        if(val.size() > 1)
-        {
-            if(val[i] < _val)
-            {
-                result.val.resize(i);
-                remainder = val[i];
-                remainder *= kUIntLimit;
-                i--;
-            }
-        }
         for(; i > 0; i--)
         {
             remainder += val[i];
@@ -346,6 +346,9 @@ public:
         }
         remainder += val[i];
         result.val[i] = remainder / _val;
+        i = result.val.size() - 1;
+        if(result.val[i] == 0U && i != 0)
+            result.val.pop_back();
 
         return  result;
     };
@@ -381,7 +384,7 @@ public:
                 carry = -1;
             }
             for (i++; i < val.size() - 1; i++)
-            {
+            {  
                 result.val.push_back(val[i] + carry); // -1 + 3 = 2 -> 1 - 3 = -2 // - | 2 | 3 + 5 ->  2 | 3 - 5 // 2 | 3 - 5 -> 2 |
                 carry = 0;
                 if (val[i] < result.val[i])
@@ -484,7 +487,7 @@ public:
 
         return  result;
     };
-    ExRange operator*(const ExRange& _var)
+    ExRange operator*(ExRange& _var)
     {
         ExRange<int>    result;
         ExRange<int>    z0, z1, z2;
@@ -805,7 +808,7 @@ public:
 
         return  result;
     };
-    static string decode(const ExRange& _var)
+    /*static string decode(const ExRange& _var)
     {
         string  resultStr;
 
@@ -923,6 +926,83 @@ public:
         }
 
         return  resultStr;
+    };*/
+    static unsigned int   divideAndGetRemainder(ExRange<int>& var, const unsigned int& val)
+    {
+        size_t  i = var.getSize() - 1;
+
+        unsigned long long  remainder = 0ULL;
+
+        if(val == 0U)
+            return  0U;
+        for (; i > 0; i--)
+        {
+            remainder += var[i];
+            var[i] = remainder / val;
+            remainder %= val;
+            remainder *= kUIntLimit;
+        }
+        remainder += var[i];
+        var[i] = remainder / val;
+        remainder %= val;
+        i = var.getSize() - 1;
+        if (var[i] == 0U && i != 0)
+            var.popBack();
+
+        return  (unsigned int)remainder;
+    };
+
+    static string   decode(const ExRange& _var)
+    {
+        string  resultStr;
+
+        ExRange<int>    quotient(_var);
+        vector<int> remainders;
+
+        size_t  i = 0;
+
+        unsigned int    remainder = 0U;
+
+        unsigned int    tempVal;
+        int digitNum = 0;
+
+        if(_var.isNegative)
+            resultStr += '-';
+        while(quotient > kValStrParseLimit)
+            remainders.push_back(divideAndGetRemainder(quotient, kValStrParseLimit));
+        remainders.push_back(quotient[0]);
+        i = remainders.size() - 1;
+        resultStr += uitos(remainders[remainders.size() - 1]);
+        for(i = remainders.size() - 2; i > 0 && remainders.size() > 1; i--)
+        {
+            tempVal = remainders[i];
+            digitNum = 0;
+            while(tempVal != 0)
+            {
+                tempVal /= 10;
+                digitNum++;
+            }
+            for(int i = 0; i < kValStrParseLimitDigitNum - digitNum; i++)
+                resultStr += '0';
+            if(remainders[i] != 0U)
+                resultStr += uitos(remainders[i]);
+        }
+        if (i == 0)
+        {
+            tempVal = remainders[i];
+            digitNum = 0;
+            while (tempVal != 0)
+            {
+                tempVal /= 10;
+                digitNum++;
+            }
+            for (int i = 0; i < kValStrParseLimitDigitNum - digitNum; i++)
+                resultStr += '0';
+            if (remainders[i] != 0)
+                resultStr += uitos(remainders[i]);
+        }
+
+        return  resultStr;
     };
 
     ExRange&    operator*=(int _val)
@@ -956,6 +1036,60 @@ public:
             val.push_back(carry);
 
         return  *this;
+    };
+    ExRange&    operator/=(int _val)
+    {
+        size_t  i = val.size() - 1;
+
+        unsigned long long  remainder = 0ULL;
+
+        try
+        {
+            if(_val == 0)
+                throw   _val;
+            else if (_val < 0)
+            {
+                _val *= -1;
+                isNegative = !isNegative;
+            }
+        }
+        catch(const exception& e)
+        {
+            cerr << e.what() << endl;
+        }
+        
+        if(val.size() > 1)
+        {
+            if(val[i] < _val)
+            {
+                remainder = val[i];
+                remainder *= kUIntLimit;
+                i--;
+            }
+        }
+        for(; i > 0; i--)
+        {
+            remainder += val[i];
+            val[i] = remainder / _val;
+            remainder %= _val;
+            remainder *= kUIntLimit;
+        }
+        remainder += val[i];
+        val[i] = remainder / _val;
+
+        return  *this;
+    };
+
+    ExRange  operator&(const ExRange<int>& _var)
+    {
+        ExRange<int>    result;
+
+        size_t  i;
+
+        for(i = 0; i < val.size() && i < _var.val.size(); i++)
+            result.val.push_back(val[i] & _var.val[i]);
+
+        return  result;
     };
 
     bool    operator==(int _val) const
@@ -1076,8 +1210,10 @@ public:
                 }
             }
         }
+
+        return  false;
     };
-    bool    operator<(int _val) const
+    bool    operator<(int _val)
     {
         if(val.size() > 1)
         {
@@ -1086,11 +1222,56 @@ public:
             else
                 return  true;
         }
+        else
+        {
+
+        }
 
         return  false;
     };
-    bool    operator>=(int _val) const;
-    bool    operator<=(int _val) const;
+
+    bool    operator>=(const unsigned int& _val)
+    {
+        if(val.size() > 1)
+            return  true;
+        else
+        {
+            if(val[0] >= _val)
+                return  true;
+            else
+                return  false;
+        }
+    };
+    bool    operator>(const unsigned int& _val)
+    {
+        if(val.size() > 1)
+            return  true;
+        else
+        {
+            if(val[0] > _val)
+                return  true;
+            else
+                return  false;
+        }
+    };
+    ExRange operator<<(size_t val)
+    {
+    
+    };
+
+    ExRange operator>>(size_t val)
+    {
+
+    };
+
+    ExRange operator<<(const ExRange<unsigned int>& val)
+    {
+
+    };
+    ExRange operator>>(const ExRange<unsigned int>& val)
+    {
+
+    };
 };
 
 template<>

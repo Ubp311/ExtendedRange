@@ -101,13 +101,18 @@ string	parse(const string& str, int* val2Ptr)
 
 int main(int argc, char* argv[])
 {
-	/*ExRange<int>	val1("-239089348398016723861817124424181060870327751887526772462589533015402653459369");
-	ExRange<int>	val2("-9322618723883548375472698183752266061003163");
+	/*ExRange<int>	val1("42384239482948234928429348");
+	int	val2 = 23423492;
+	// ExRange<int>	val2("43289483242394823942");
 	ExRange<int>	result;
 
-	result = val1 + val2;
+	result = val1 / val2;
+
+	unsigned long long	ullMax = -1LL;
 
 	cout << ExRange<int>::decode(result) << endl;*/
+
+	//cout << ExRange<int>::decode(result) << endl;
 
 	/*random_device rd1, rd2;
 
@@ -136,7 +141,7 @@ int main(int argc, char* argv[])
 
 		// delete[] vals;
 	}*/
-	ifstream	iFileOpen, iFile;
+	/*ifstream	iFileOpen, iFile;
 	ofstream	oFile;
 
 	string	fileName;
@@ -169,6 +174,7 @@ int main(int argc, char* argv[])
 	}
 	oFile.open(fileName + ".txt");
 
+	//unsigned int	iter = 1U;
 	while (!iFileOpen.eof())
 	{
 		string	str;
@@ -178,19 +184,19 @@ int main(int argc, char* argv[])
 		getline(iFileOpen, str);
 
 		valStrs = parse(str);
-		//ExRange<int>	val1(valStrs[0]), val2(valStrs[1]);
-		ExRange<int>	val1(valStrs[0]);
-		ExRange<int>	val2(valStrs[1]);
-		//int	val2 = atoi(valStrs[1].c_str());
+		ExRange<int>	val1(valStrs[0]), val2(valStrs[1]);
 		ExRange<int>	result;
 
 		result = val1 + val2;
 		resultStr = ExRange<int>::decode(result) + '\n';
-		oFile.write(resultStr.c_str(), resultStr.size());
-		cout << resultStr;
+		//oFile.write(resultStr.c_str(), resultStr.size());
+		// cout << resultStr;
 
 		delete[]	valStrs;
+		
+		//cout << iter++ << endl;
 	}
+	//cout << "Complete!" << endl;
 
 	iFile.close();
 	iFileOpen.close();
