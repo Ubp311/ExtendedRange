@@ -101,16 +101,14 @@ string	parse(const string& str, int* val2Ptr)
 
 int main(int argc, char* argv[])
 {
-	/*ExRange<int>	val1("42384239482948234928429348");
+	ExRange<int>	val1("42384239482948234928429348");
 	int	val2 = 23423492;
 	// ExRange<int>	val2("43289483242394823942");
 	ExRange<int>	result;
 
-	result = val1 / val2;
+	val1 += 2;
 
-	unsigned long long	ullMax = -1LL;
-
-	cout << ExRange<int>::decode(result) << endl;*/
+	cout << ExRange<int>::decode(val1) << endl;
 
 	//cout << ExRange<int>::decode(result) << endl;
 
