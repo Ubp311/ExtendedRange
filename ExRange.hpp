@@ -580,7 +580,7 @@ public:
                         else
                             vars.push_back(ExRange<int>((size_t)((1 << expVal) / 2 + i / 2 < remainder) ? splitedMinSize + 1 : splitedMinSize));
                     }
-                    
+
                 }
             } //----------------------*
         };
@@ -595,7 +595,7 @@ public:
         result.isNegative = (_var < 0) ? !isNegative : isNegative;
         if(val.size() > kKaratsubaLimit && _var.val.size() > kKaratsubaLimit)
         {
-            splitedVal    a(*this, _var);
+            cout << "Implementing..." << endl;
         }
         else
         {

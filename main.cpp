@@ -101,14 +101,55 @@ string	parse(const string& str, int* val2Ptr)
 
 int main(int argc, char* argv[])
 {
-	ExRange<int>	val1("42384239482948234928429348");
+	while(true)
+	{
+		string	val1Str;
+		int	val2;
+		char	op;
+
+		cout << "Input the first value string : ";
+		cin >> val1Str;
+		if(!val1Str.compare("exit"))
+			break;
+		cout << "Input the second value : ";
+		cin >> val2;
+		if(!val1Str.compare("exit"))
+			break;
+		cout << "Input the operator : ";
+		cin >> op;
+		if(!val1Str.compare("exit"))
+			break;
+		switch (op)
+		{
+		case '+':
+			cout << ExRange<int>::decode(ExRange<int>(val1Str) + val2) << endl;
+			break;
+		case '-':
+			cout << ExRange<int>::decode(ExRange<int>(val1Str) - val2) << endl;
+			break;
+		case '*':
+			cout << ExRange<int>::decode(ExRange<int>(val1Str) * val2) << endl;
+			break;
+		case '/':
+			cout << ExRange<int>::decode(ExRange<int>(val1Str) / val2) << endl;
+			break;
+		case '%':
+			cout << "Implementing.." << endl;
+			break;
+		default:
+			cout << "Error : Unknown operator" << endl;
+			break;
+		}
+	}
+
+	/*ExRange<int>	val1("42384239482948234928429348");
 	int	val2 = 23423492;
 	// ExRange<int>	val2("43289483242394823942");
 	ExRange<int>	result;
 
 	val1 += 2;
 
-	cout << ExRange<int>::decode(val1) << endl;
+	cout << ExRange<int>::decode(val1) << endl;*/
 
 	//cout << ExRange<int>::decode(result) << endl;
 
