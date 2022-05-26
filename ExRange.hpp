@@ -36,7 +36,6 @@ string uitos(unsigned int _val)
 
     return  resultStr;
 };
-
 int  myCeil(double val)
 {
     return  (val >= 0.0) ? val - int(1.0 - val + (int)val) + 1.0 : val;
@@ -46,8 +45,33 @@ size_t  myCeil(size_t operand, size_t divide)
     if(divide != 0 && operand % divide > 0)
         return  operand / divide + 1;
     if(divide == 0)
-        throw   "Division by zero.";
-    return  operand / divide;
+        throw "Division by zero.";
+    return operand / divide;
+};
+size_t bitCeil(size_t operand, size_t div) // 3
+{
+    size_t temp1, temp2, expVal = 1;
+    size_t size = 0;
+
+    if (div != 0 && operand % div != 0)
+        temp2 = temp1 = operand / div + 1;
+    else if (div == 0)
+        throw "Division by zero.";
+    else
+        temp2 = temp1 = operand / div;
+    if (temp1 == 0)
+        return 0;
+    while (temp1 != 0)
+    {
+        size++;
+        temp1 >>= 1;
+        expVal <<= 1;
+    }
+    expVal >>= 1;
+    if (temp2 == expVal)
+        return size;
+
+    return size + 1;
 };
 
 template<typename T>
@@ -68,6 +92,8 @@ public:
     };
 };
 
+
+
 template<>
 class ExRange<int>
 {
@@ -79,11 +105,6 @@ public:
     ExRange()
     {
         isNegative = false;
-    };
-    ExRange(size_t  capacity)
-    {
-        isNegative = false;
-        val.reserve(capacity);
     };
     ExRange(int&& _val)
     {
@@ -110,6 +131,12 @@ public:
             val.push_back(_val * -1);
             isNegative = true;
         }
+    };
+    ExRange(unsigned long long& _val)
+    {
+        val.push_back((unsigned int)_val);
+        if(_val >= kUIntLimit)
+            val.push_back(_val >> 32);
     };
     ExRange(const ExRange& _var)
     {
@@ -184,6 +211,7 @@ public:
                 val.push_back(0U);
         }
     };
+
     ExRange operator=(const ExRange& _var)
     {
         val.clear();
@@ -268,12 +296,19 @@ public:
     {
         return  val[index];
     };
+    void    clear()
+    {
+        isNegative = false;
+        val.clear();
+    };
+    ExRange&    split(const ExRange& _var, size_t startIndex, size_t endIndex)
+    {
 
+    };
     size_t  getSize()
     {
         return  val.size();
     };
-
     void    pushBack(unsigned int& _val)
     {
         val.push_back(_val);
@@ -282,24 +317,7 @@ public:
     void    popBack()
     {
         val.pop_back();
-    }
-
-    /*ExRange& split(size_t firstIndex, size_t lastIndex)
-    {
-        ExRange<int>    result;
-
-        try
-        {
-            for (size_t i = firstIndex; i <= lastIndex; i++)
-                result.val.push_back(val[i]);
-            return  result;
-        }
-        catch (size_t index)
-        {
-            throw out_of_range("Error : Out of the range");  
-        } 
-    };*/
-
+    };
     ExRange operator*(int _val)
     {
         ExRange<int> result;
@@ -509,120 +527,91 @@ public:
     };
     ExRange operator*(ExRange& _var)
     {
-        ExRange<int>    result;
-        ExRange<int>    z0, z1, z2;
+        ExRange<int> result;
+        ExRange<int> z[3];
 
-        struct splitedVal
-        {
-            vector<ExRange<int>>   vars;
-            vector<ExRange<int>>   _vars;
-            vector<size_t>  sizes;
+        vector<size_t> sizes;
 
-            size_t  expVal;
+        size_t maxSize = (val.size() >= _var.getSize()) ? val.size() : _var.getSize();
+        size_t expVal = bitCeil(maxSize, kKaratsubaLimit) - 1;
+        size_t splitedMinSize = maxSize / (1 << expVal);
+        size_t remainder = maxSize % (1 << expVal);
+        size_t currentIndex = 0;
+        size_t i = 0, j = 0;
 
-            size_t bitCeil(size_t operand, size_t div) // 3
-            {
-                size_t temp1, temp2, expVal = 1;
-                size_t size = 0;
+        unsigned long long mul;
+        unsigned int carry = 0U;
 
-                if (div != 0 && operand % div != 0)
-                    temp2 = temp1 = operand / div + 1;
-                else if (div == 0)
-                    throw "Division by zero.";
-                else
-                    temp2 = temp1 = operand / div;
-                if (temp1 == 0)
-                    return 0;
-                while (temp1 != 0)
-                {
-                    size++;
-                    temp1 >>= 1;
-                    expVal <<= 1;
-                }
-                expVal >>= 1;
-                if (temp2 == expVal)
-                    return size;
-
-                return size + 1;
-            };
-            splitedVal()
-            {
-                expVal = 1;
-            };
-            splitedVal(ExRange& var, ExRange& _var)
-            {
-                //Alternative code required.*----------
-
-                size_t  maxSize = (var.getSize() >= _var.getSize()) ? var.getSize() : _var.getSize();
-                expVal = bitCeil(maxSize, kKaratsubaLimit) - 1;
-                /*(2 << expVal) + (myCeil(maxSize, expVal) - 2)) * ((2 << bitCeil(maxSize) - 1) * kKarastubaLimit - maxSize)
-                size_t  splitSize = (2 << expVal + 1) + ((myCeil(maxSize, expVal * (kKaratsubaLimit + 1)) - 2)
-                 * 2 << expVal * (kKaratsubaLimit + 1) - maxSize));*/
-
-                size_t  splitedMinSize = maxSize / (1 << expVal);
-                size_t  remainder = maxSize % (1 << expVal);
-                if(splitedMinSize == kKaratsubaLimit / 2 && remainder < (1 << expVal) / 2)
-                {
-                    for(size_t i = 0; i < remainder; i++)
-                    {
-                        vars.push_back(ExRange<int>((size_t)(kKaratsubaLimit / 2 + 1)));
-                        vars.push_back(ExRange<int>((size_t)(kKaratsubaLimit / 2)));
-                    }
-                    for(size_t i = 0; i < remainder; i++)
-                        vars.push_back(ExRange<int>((size_t)(kKaratsubaLimit)));
-                }
-                else
-                {
-                    for(size_t i = 0; i < 1 << expVal; i++)
-                    {
-                        if(i % 2 == 0)
-                            vars.push_back(ExRange<int>((size_t)((i / 2 < remainder) ? splitedMinSize + 1 : splitedMinSize)));
-                        else
-                            vars.push_back(ExRange<int>((size_t)((1 << expVal) / 2 + i / 2 < remainder) ? splitedMinSize + 1 : splitedMinSize));
-                    }
-
-                }
-            } //----------------------*
-        };
-
-        size_t  i, j;
-
-        unsigned long long  mul;
-        unsigned int    carry = 0U;
-
-        if(_var == 0)
-            return  ExRange(0);
+        if (_var == 0)
+            return ExRange(0);
         result.isNegative = (_var < 0) ? !isNegative : isNegative;
-        if(val.size() > kKaratsubaLimit && _var.val.size() > kKaratsubaLimit)
+
+        if (splitedMinSize == kKaratsubaLimit / 2 && remainder < (1 << expVal) / 2)
         {
-            cout << "Implementing..." << endl;
+            for (; i < remainder; i++)
+            {
+                sizes.push_back(kKaratsubaLimit / 2 + 1);
+                sizes.push_back(kKaratsubaLimit / 2);
+            }
+            for (i = 0; i < (1 << expVal) / 2 - remainder; i++)
+                sizes.push_back(kKaratsubaLimit);
         }
         else
         {
-            for (i = 0; i < val.size(); i++)
+            for (; i < 1 << expVal; i++)
+            {
+                if (i % 2 == 0)
+                    sizes.push_back(((i / 2 < remainder) ? splitedMinSize + 1 : splitedMinSize));
+                else
+                    sizes.push_back(((1 << expVal) / 2 + i / 2 < remainder) ? splitedMinSize + 1 : splitedMinSize);
+            }
+        }
+        for (i = 0; i < sizes.size() / 2; i++)
+        {
+            z[0].clear();
+            z[1].clear();
+            z[2].clear();
+            for (; j < sizes[i * 2]; j++)
             {
                 carry = 0U;
-
-                for (j = 0; i < _var.val.size(); j++)
+                for (size_t k = 0; k < sizes[i * 2]; k++)
                 {
-                    mul = (unsigned long long)val[i] * (unsigned long long)_var.val[i] + carry;
+                    mul = (unsigned long long)val[j] * (unsigned long long)_var.val[k] + carry;
                     carry = mul / kUIntLimit;
                     mul %= kUIntLimit;
-                    if (i + j == result.val.size())
-                        result.val.push_back(0U);
-                    if (mul + result.val[i + j] >= kUIntLimit)
+                    if (j + k == z[0].getSize())
+                        z[0].val.push_back(0U);
+                    if (mul + z[0][j + k] >= kIntLimit)
                     {
                         carry++;
-                        result.val[i + j] = (mul + result.val[i + j]) - kUIntLimit;
+                        z[0][j + k] = (mul + z[0][j + k]) - kUIntLimit;
                     }
                     else
-                        result.val[i + j] += mul;
+                        z[0][j + k] += mul;
                 }
                 if (carry != 0U)
                     result.val.push_back(carry);
             }
+            for(j = 0; j < sizes[i * 2 + 1]; j++)
+            {
+                carry = 0U;
+                for(size_t k = 0; k < sizes[i * 2 + 1]; k++)
+                {
+                    mul = (unsigned long long)val[j] * (unsigned long long)_var[k] + carry;
+                    carry = mul / kUIntLimit;
+                    mul %= kUIntLimit;
+                    if (j + k == z[1].getSize())
+                        z[1].val.push_back(0U);
+                    if (mul + z[1][j + k] >= kIntLimit)
+                    {
+                        carry++;
+                        z[1][j + k] = (mul + z[1].val[j + k]) - kUIntLimit;
+                    }
+                    else
+                        z[1][j + k] += mul;
+                }
+            }
         }
-
         return  result;
     };
     ExRange operator/(const ExRange& _var)
@@ -833,125 +822,6 @@ public:
 
         return  result;
     };
-    /*static string decode(const ExRange& _var)
-    {
-        string  resultStr;
-
-        size_t  i, j, k;
-
-        const unsigned int  base[2] = { kUIntLimit % kValStrParseLimit, kUIntLimit / kValStrParseLimit };
-        ExRange<int>    mul(1);
-        ExRange<int>    tempMul(0);
-        ExRange<int>    result;
-
-        unsigned int    vals[2];
-
-        unsigned int    carry;
-
-        for (i = 0; i < _var.val.size(); i++)
-        {
-            unsigned int    tempCarry = 0U;
-
-            tempMul.val.clear();
-            vals[0] = _var.val[i] % kValStrParseLimit;
-            vals[1] = _var.val[i] / kValStrParseLimit;
-            for (j = 0; j < mul.val.size(); j++)
-            {
-                unsigned long long  tempMul;
-                carry = 0U;
-
-                for (k = 0; k < 2; k++)
-                {
-                    tempMul = (unsigned long long)mul.val[j] * (unsigned long long)vals[k] + carry;
-                    carry = tempMul / kValStrParseLimit;
-                    tempMul %= kValStrParseLimit;
-                    if (j + k >= result.val.size())
-                        result.val.push_back(0U);
-                    carry += ((unsigned long long)result.val[j + k] + tempMul) / kValStrParseLimit;
-                    result.val[j + k] = ((unsigned long long)result.val[j + k] + tempMul) % kValStrParseLimit;
-                }
-                if (carry != 0U)
-                {
-                    if (j + k < result.val.size())
-                    {
-                        result.val[j + k] += carry;
-                        if (result.val[j + k] >= kValStrParseLimit)
-                        {
-                            result.val[j + k] %= kValStrParseLimit;
-                            if(j + k + 1 >= result.val.size())
-                                result.val.push_back(1U);
-                            else
-                                result.val[j + k + 1]++;
-                        }
-                    }
-                    else
-                        result.val.push_back(carry);
-                }
-            }
-            for (j = 0; j < mul.val.size(); j++)
-            {
-                unsigned long long  result;
-                carry = 0U;
-
-                for (k = 0; k < 2; k++)
-                {
-                    result = (unsigned long long)mul.val[j] * (unsigned long long)base[k] + carry;
-                    carry = result / kValStrParseLimit;
-                    result %= kValStrParseLimit;
-                    if (j + k >= tempMul.val.size())
-                        tempMul.val.push_back(0U);
-                    carry += ((unsigned long long)tempMul.val[j + k] + result) / kValStrParseLimit;
-                    tempMul.val[j + k] = ((unsigned long long)tempMul.val[j + k] + result) % kValStrParseLimit;
-                }
-                if (carry != 0U)
-                    tempMul.val.push_back(carry);
-            }
-            mul.val = tempMul.val;
-        }
-        for (i = result.val.size() - 1; i > 0; i--)
-        {
-            if (result.val[i] != 0U)
-                break;
-            else
-                result.val.pop_back();
-        }
-        if (_var.isNegative && (_var.val.size() > 1 || _var.val[0] != 0U))
-            resultStr += '-';
-        i = result.val.size() - 1;
-        int tempVal;
-        int digitNum;
-        resultStr += uitos(result.val[i]);
-        if (i != 0)
-        {
-            for (i--; i > 0; i--)
-            {
-                tempVal = result.val[i];
-                digitNum = 0;
-
-                while (tempVal != 0)
-                {
-                    tempVal /= 10;
-                    digitNum++;
-                }
-                for (int i = 0; i < kValStrParseLimitDigitNum - digitNum; i++)
-                    resultStr += '0';
-                resultStr += uitos(result.val[i]);
-            }
-            tempVal = result.val[i];
-            digitNum = 0;
-
-            while (tempVal != 0)
-            {
-                tempVal /= 10;
-                digitNum++;
-            }
-            for (int i = 0; i < kValStrParseLimitDigitNum - digitNum; i++)
-                resultStr += '0';
-            resultStr += uitos(result.val[i]);
-        }
-
-        return  resultStr;
-    };*/
     static unsigned int   divideAndGetRemainder(ExRange<int>& var, const unsigned int& val)
     {
         size_t  i = var.getSize() - 1;
@@ -1245,26 +1115,6 @@ public:
 
     bool    operator==(int _val)
     {
-        /*if (val.size() > 2)
-            return  false;
-        else if (val.size() == 2)
-        {
-            if (_val > 0)
-            {
-                if (val[1] == 0U && val[0] == _val)
-                    return  true;
-            }
-            else if (_val < 0)
-            {
-                if (val[1] == -1 && val[0] == _val * -1)
-                    return  true;
-            }
-            return  false;
-        }
-        else if (val.size() == 1 && _val == 0)
-            return  true;
-        else
-            return  false;*/
         if (val.size() > 1)
             return  false;
         else if (val.size() == 1)
@@ -1287,26 +1137,6 @@ public:
     };
     bool    operator!=(int _val)
     {
-        /*if (val.size() > 2)
-            return  true;
-        else if (val.size() == 2)
-        {
-            if (_val > 0)
-            {
-                if (val[1] != 0U || val[0] != _val)
-                    return  true;
-            }
-            else if (_val < 0)
-            {
-                if (val[1] != -1 && val[0] != _val * -1)
-                    return  true;
-            }
-            return  false;
-        }
-        else if (val.size() != 1 || _val != 0)
-            return  true;
-        else
-            return  false;*/
         if (val.size() > 1)
             return  true;
         else if (val.size() == 1)
@@ -1422,6 +1252,28 @@ public:
     ExRange operator>>(const ExRange<unsigned int>& val)
     {
 
+    };
+};
+
+template<>
+class ExRange<int&>
+{
+private:
+    ExRange<int>    &valRef;
+    size_t  startIndex, endIndex;
+public:
+    ExRange(ExRange<int>& _var, size_t _startIndex, size_t _endIndex) : valRef(_var) 
+    {
+        startIndex = _startIndex;
+        endIndex = _endIndex;
+    };
+    ExRange operator+(const ExRange<int&> _varRef)
+    {
+        ExRange<int>    result;
+
+        size_t  i;
+
+        int carry = 0;
     };
 };
 
