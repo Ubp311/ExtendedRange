@@ -1,6 +1,7 @@
 #include    <iostream>
 #include    <vector>
 #include    <string>
+#include    <memory>
 
 
 using namespace std;
@@ -100,22 +101,46 @@ class ExRange<int>
 private:
     vector<unsigned int>    val;
     bool    isNegative;
-    inline ExRange basicMultiply(ExRange<int>& var, ExRange<int>& _var)
+    inline ExRange basicMultiply(const ExRange<int>& _var)
     {
         ExRange<int>    result;
 
         size_t  i = 0, j = 0;
 
         unsigned long long  mul;
-        unsigned int    carry = 0U;
+        unsigned int    carry;
 
-        if(_var == 0 || _var == 0)
+        if(*this == 0 || _var == 0)
             return  ExRange(0);
-        result.isNegative = (_var < 0) ? !var.isNegative : var.isNegative;
-        if(var == 1 || _var == 1)
-            return  var;
-        else if(_var == -1 || var == -1)
-            return  var.isNegative = result.isNegative;
+        result.isNegative = (_var < 0) ? !isNegative : isNegative;
+        if(*this == 1 || _var == 1)
+            return  *this;
+        else if(_var == -1 || *this == -1)
+            return  isNegative = result.isNegative;
+        
+        for(; i < val.size(); i++)
+        {
+            carry = 0U;
+            for(j = 0; j < _var.val.size(); j++)
+            {
+                mul = (unsigned long long)val[i] * (unsigned long long)_var.val[j] + carry;
+                carry = mul / kUIntLimit;
+                mul %= kUIntLimit;
+                if (i + j == result.val.size())
+                    result.val.push_back(0U);
+                if (mul + result[i + j] >= kIntLimit)
+                {
+                    carry++;
+                    result[i + j] = (mul + result[i + j]) - kUIntLimit;
+                }
+                else
+                    result[i + j] += mul;
+            }
+            if(carry != 0U)
+                result.pushBack(carry);
+        }
+
+        return  result;
     };
 public:
     ExRange()
@@ -621,12 +646,12 @@ public:
             if(i % 2 == 1)
             {
                 _p1.startIndex = p1.startIndex = _p0.endIndex = p0.endIndex += sizes[i - 1];
-                _p1.endIndex = p1.endIndex += sizes[i];
-                z[2] = (_p0 + _p1) * (p0 + p1) - z[1] - z[0];
-                _p0.startIndex = p0.startIndex += sizes[i];
+                _p1.endIndex = p1.endIndex += sizes[i] + sizes[i - 1];
+                z[2] = (_p0 + _p1).basicMultiply(p0 + p1) - z[1] - z[0];
+                _p0.startIndex = p0.startIndex = p1.endIndex;
             }
         }
-        if(sizes.size() == 1)
+        if(i % 2 == 1)
             return  z[0];
 
         return  result;
@@ -1130,7 +1155,7 @@ public:
         return  result;
     };
 
-    bool    operator==(int _val)
+    bool    operator==(int _val) const
     {
         if (val.size() > 1)
             return  false;
@@ -1152,7 +1177,7 @@ public:
         else
             return  false;
     };
-    bool    operator!=(int _val)
+    bool    operator!=(int _val) const
     {
         if (val.size() > 1)
             return  true;
@@ -1211,7 +1236,7 @@ public:
 
         return  false;
     };
-    bool    operator<(int _val)
+    bool    operator<(int _val) const
     {
         if(val.size() > 1)
         {
@@ -1228,7 +1253,7 @@ public:
         return  false;
     };
 
-    bool    operator>=(const unsigned int& _val)
+    bool    operator>=(const unsigned int& _val) const
     {
         if(val.size() > 1)
             return  true;
@@ -1240,7 +1265,7 @@ public:
                 return  false;
         }
     };
-    bool    operator>(const unsigned int& _val)
+    bool    operator>(const unsigned int& _val) const
     {
         if(val.size() > 1)
             return  true;
