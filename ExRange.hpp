@@ -100,7 +100,23 @@ class ExRange<int>
 private:
     vector<unsigned int>    val;
     bool    isNegative;
-    
+    inline ExRange basicMultiply(ExRange<int>& var, ExRange<int>& _var)
+    {
+        ExRange<int>    result;
+
+        size_t  i = 0, j = 0;
+
+        unsigned long long  mul;
+        unsigned int    carry = 0U;
+
+        if(_var == 0 || _var == 0)
+            return  ExRange(0);
+        result.isNegative = (_var < 0) ? !var.isNegative : var.isNegative;
+        if(var == 1 || _var == 1)
+            return  var;
+        else if(_var == -1 || var == -1)
+            return  var.isNegative = result.isNegative;
+    };
 public:
     ExRange()
     {
@@ -210,6 +226,10 @@ public:
             if (val.empty())
                 val.push_back(0U);
         }
+    };
+    ExRange(const char* _valStr)
+    {
+        *this = ExRange((string)_valStr);
     };
 
     ExRange operator=(const ExRange& _var)
@@ -532,7 +552,8 @@ public:
     {
         ExRange<int> result;
         ExRange<int> z[3];
-        ExRange<int&> zRef0 = z[0], zRef1 = z[1];
+        ExRange<int&>   p0 = *this, p1 = *this;
+        ExRange<int&>   _p0 = _var, _p1 = _var;
 
         vector<size_t> sizes;
 
@@ -549,8 +570,10 @@ public:
         if (_var == 0)
             return ExRange(0);
         result.isNegative = (_var < 0) ? !isNegative : isNegative;
-
-        sizes.push_back(0);
+        if(_var == 1)
+            return  *this;
+        else if(_var == -1)
+            return  ExRange(*this).isNegative = result.isNegative;
         if (splitedMinSize == kKaratsubaLimit / 2 && remainder < (1 << expVal) / 2)
         {
             for (; i < remainder; i++)
@@ -571,55 +594,41 @@ public:
                     sizes.push_back(((1 << expVal) / 2 + i / 2 < remainder) ? splitedMinSize + 1 : splitedMinSize);
             }
         }
-        for (i = 1; i < sizes.size() / 2; i++)
+        _p0.startIndex = p0.startIndex = 0;
+        for(i = 0; i < sizes.size(); i++)
         {
-            z[0].clear();
-            z[1].clear();
-            z[2].clear();
-            for (; j < sizes[i * 2]; j++)
+            for (; j < sizes[i]; j++)
             {
                 carry = 0U;
-                for (size_t k = 0; k < sizes[i * 2 - 1]; k++)
+                for (size_t k = 0; k < sizes[i]; k++)
                 {
                     mul = (unsigned long long)val[j] * (unsigned long long)_var.val[k] + carry;
                     carry = mul / kUIntLimit;
                     mul %= kUIntLimit;
-                    if (j + k == z[0].getSize())
-                        z[0].val.push_back(0U);
-                    if (mul + z[0][j + k] >= kIntLimit)
+                    if (j + k == z[i % 2].getSize())
+                        z[i % 2].val.push_back(0U);
+                    if (mul + z[i % 2][j + k] >= kIntLimit)
                     {
                         carry++;
-                        z[0][j + k] = (mul + z[0][j + k]) - kUIntLimit;
+                        z[i % 2][j + k] = (mul + z[i % 2][j + k]) - kUIntLimit;
                     }
                     else
-                        z[0][j + k] += mul;
+                        z[i % 2][j + k] += mul;
                 }
                 if (carry != 0U)
-                    result.val.push_back(carry);
+                    z[i % 2].pushBack(carry);
             }
-            for(j = 0; j < sizes[i * 2 + 1]; j++)
+            if(i % 2 == 1)
             {
-                carry = 0U;
-                for(size_t k = 0; k < sizes[i * 2]; k++)
-                {
-                    mul = (unsigned long long)val[j] * (unsigned long long)_var[k] + carry;
-                    carry = mul / kUIntLimit;
-                    mul %= kUIntLimit;
-                    if (j + k == z[1].getSize())
-                        z[1].val.push_back(0U);
-                    if (mul + z[1][j + k] >= kIntLimit)
-                    {
-                        carry++;
-                        z[1][j + k] = (mul + z[1].val[j + k]) - kUIntLimit;
-                    }
-                    else
-                        z[1][j + k] += mul;
-                }
+                _p1.startIndex = p1.startIndex = _p0.endIndex = p0.endIndex += sizes[i - 1];
+                _p1.endIndex = p1.endIndex += sizes[i];
+                z[2] = (_p0 + _p1) * (p0 + p1) - z[1] - z[0];
+                _p0.startIndex = p0.startIndex += sizes[i];
             }
-            zRef0 = zRef0.split(sizes[i * 2 - 1], sizes[i * 2]);
-            zRef1 = zRef1.split(sizes[i * 2], sizes[i * 2 + 1]);
-            z[2] = zRef0 + zRef1;
         }
+        if(sizes.size() == 1)
+            return  z[0];
+
         return  result;
     };
     ExRange operator/(const ExRange& _var)
@@ -1268,13 +1277,9 @@ class ExRange<int&>
 {
 private:
     ExRange<int>    &valRef;
-    size_t  startIndex, endIndex;
 public:
-    ExRange(ExRange<int>& _var) : valRef(_var) 
-    {
-        startIndex = 0;
-        endIndex = 0;
-    };
+    size_t  startIndex, endIndex;
+    ExRange(ExRange<int>& _var) : valRef(_var) {};
     ExRange(ExRange<int>& _var, size_t _startIndex, size_t _endIndex) : valRef(_var) 
     {
         startIndex = _startIndex;
@@ -1310,14 +1315,14 @@ public:
             }
             if(!isValLarger)
             {
-                for (i = 0; i <= varSizeDiff; i++)
+                for (i = 0; i < varSizeDiff; i++)
                 {
                     result.pushBack(_varRef.valRef[startIndex + i] - valRef[_varRef.startIndex + i] + carry);
                     carry = 0;
                     if ((_varRef.valRef[_varRef.startIndex + i] < result[i] || valRef[startIndex + i] != 0U) && _varRef.valRef[_varRef.startIndex + i] <= result[i])
                         carry = -1;
                 }
-                for(; i <= _varSizeDiff; i++)
+                for(; i < _varSizeDiff; i++)
                 {
                     result.pushBack(_varRef.valRef[_varRef.startIndex + i] + carry);
                     carry = 0;
@@ -1329,7 +1334,7 @@ public:
             }
             else
             {
-                for (i = 0; i <= _varSizeDiff; i++)
+                for (i = 0; i < _varSizeDiff; i++)
                 {
                     result.pushBack(valRef[startIndex + i] - _varRef.valRef[_varRef.startIndex + i] + carry); // 0 - 0 - 1 = kU-1 // 3 - kU-1 - 1 = 3 // 3 - 0 - 0 = 3
                     carry = 0;
@@ -1390,13 +1395,6 @@ public:
     ExRange&    operator=(const ExRange<int&>& _var)
     {
         valRef = _var.valRef;
-
-        return  *this;
-    };
-    ExRange&    split(size_t startIndex, size_t endIndex)
-    {
-        startIndex = startIndex;
-        endIndex = endIndex;
 
         return  *this;
     };

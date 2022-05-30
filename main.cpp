@@ -103,7 +103,7 @@ int main(int argc, char* argv[])
 {
 	while(true)
 	{
-		string	val1Str;
+		/*string	val1Str;
 		int	val2;
 		char	op;
 
@@ -139,7 +139,11 @@ int main(int argc, char* argv[])
 		default:
 			cout << "Error : Unknown operator" << endl;
 			break;
-		}
+		}*/
+
+		ExRange<int> a("1"), b("1");
+
+		cout << ExRange<int>::decode(a * b) << endl;
 	}
 
 	/*ExRange<int>	val1("42384239482948234928429348");
