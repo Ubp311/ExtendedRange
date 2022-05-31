@@ -93,7 +93,11 @@ public:
     };
 };
 
+template<typename T>
+class ExRangeRef;
 
+template<>
+class ExRangeRef<int>;
 
 template<>
 class ExRange<int>
@@ -573,12 +577,12 @@ public:
 
         return  result;
     };
-    ExRange operator*(ExRange& _var)
-    {
+    ExRange operator*(ExRange<int>& _var)
+    {   //-----------------*Alternative code required.
         ExRange<int> result;
         ExRange<int> z[3];
-        ExRange<int&>   p0 = *this, p1 = *this;
-        ExRange<int&>   _p0 = _var, _p1 = _var;
+        ExRangeRef<int>   p0 = *this, p1 = *this;
+        ExRangeRef<int>   _p0 = _var, _p1 = _var;
 
         vector<size_t> sizes;
 
@@ -653,9 +657,10 @@ public:
         }
         if(i % 2 == 1)
             return  z[0];
+        //----------------------------------------
 
         return  result;
-    };
+    }; 
     ExRange operator/(const ExRange& _var)
     {
         ExRange<int>    result;
@@ -1297,20 +1302,25 @@ public:
     };
 };
 
+template<typename T>
+class ExRangeRef
+{
+};
+
 template<>
-class ExRange<int&>
+class ExRangeRef<int>
 {
 private:
     ExRange<int>    &valRef;
 public:
     size_t  startIndex, endIndex;
-    ExRange(ExRange<int>& _var) : valRef(_var) {};
-    ExRange(ExRange<int>& _var, size_t _startIndex, size_t _endIndex) : valRef(_var) 
+    ExRangeRef(ExRange<int>& _var) : valRef(_var) {};
+    ExRangeRef(ExRange<int>& _var, size_t _startIndex, size_t _endIndex) : valRef(_var) 
     {
         startIndex = _startIndex;
         endIndex = _endIndex;
     };
-    ExRange<int> operator+(const ExRange<int&> _varRef)
+    ExRange<int> operator+(const ExRangeRef& _varRef)
     {
         ExRange<int>    result;
 
@@ -1417,9 +1427,11 @@ public:
 
         return  result;
     };
-    ExRange&    operator=(const ExRange<int&>& _var)
+    ExRangeRef&    operator=(const ExRangeRef<int>& _var)
     {
         valRef = _var.valRef;
+        startIndex = _var.startIndex;
+        endIndex = _var.endIndex;
 
         return  *this;
     };
