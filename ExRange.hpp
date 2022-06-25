@@ -75,6 +75,22 @@ size_t bitCeil(size_t operand, size_t div)
 };
 
 template<typename T>
+class MemoryManager
+{
+private:
+    static MemoryManager*   instance;
+    MemoryManager();
+    ~MemoryManager();
+public:
+    static  MemoryManager& getIstnace()
+    {
+        if(instance == nullptr)
+            instance = new MemoryManager();
+        return  *instance;
+    };
+};
+
+template<typename T>
 class ExRange
 { 
 };
@@ -113,7 +129,7 @@ public:
     inline  ExRange basicMultiply(const ExRange<int> &_var) const;
     static unsigned int   divideAndGetRemainder(ExRange<int>& var, const unsigned int& val);
 
-    ExRange operator*(int _val) const;
+    ExRange& operator*(int _val) const;
     ExRange operator/(int _val) const;
     ExRange operator%(const int _val) const;
     ExRange operator+(int _val) const;
@@ -161,12 +177,34 @@ class ExRangeRef<int>
 {
 private:
     vector<unsigned int> &valRef;
+    size_t  startIndex, endIndex;
     bool &isNegative;
 public:
-    size_t startIndex = 0, endIndex = 0;
-    ExRangeRef(ExRange<int> &_var) : valRef(_var.getValuesRef()), isNegative(_var.getNegativeSignRef()){};
-    ExRange<int> operator+(const ExRangeRef &_varRef);
-    ExRangeRef &operator=(const ExRangeRef<int> &_var);
+    ExRangeRef(ExRange<int> &_var) : valRef(_var.getValuesRef()), isNegative(_var.getNegativeSignRef())
+    {
+        startIndex = 0;
+        endIndex = 0;
+    };
+    ExRangeRef(ExRange<int> &_var, const size_t& _startIndex, const size_t& _endIndex) : valRef(_var.getValuesRef()), isNegative(_var.getNegativeSignRef())
+    {
+        startIndex = _startIndex;
+        endIndex = _endIndex;
+    };
+    inline size_t   getStartIndex();
+    inline void   setStartIndex(const size_t& index);
+    inline size_t   getEndIndex();
+    inline void   setEndIndex(const size_t& index);
+
+    ExRange<int>    operator+(const ExRangeRef &_varRef);
+    ExRangeRef  &operator=(const ExRangeRef<int> &_var);
+    inline  ExRange<int>    basicMultiply(const ExRangeRef& _var) const;
+
+    bool    operator==(const int &_val) const;
+    bool    operator!=(const int &_val) const;
+    bool    operator>(int _val) const;
+    bool    operator<(int _val) const;
+    bool    operator>=(int _val) const;
+    bool    operator<=(int _val) const;
 };
 
 ExRange<int>::ExRange()
@@ -507,9 +545,9 @@ unsigned int    ExRange<int>::divideAndGetRemainder(ExRange<int>& var, const uns
     return (unsigned int)remainder;
 };
 
-ExRange<int>    ExRange<int>::operator*(int _val) const
+ExRange<int>&    ExRange<int>::operator*(int _val) const
 {
-    ExRange<int> result;
+    ExRange<int>*   result = new ExRange<int>();
 
     size_t i = 0;
 
@@ -527,7 +565,7 @@ ExRange<int>    ExRange<int>::operator*(int _val) const
         cerr << e << '\n';
     }
 
-    result.isNegative = isNegative;
+    result->isNegative = isNegative;
     if (_val == 0 || *this == 0)
         return ExRange(0);
     else if (_val < 0)
@@ -770,15 +808,25 @@ ExRange<int>    ExRange<int>::operator*(ExRange<int>& _var)
 
     vector<size_t>  sizes;
 
-    size_t  maxSize = (val.size() >= _var.getSize()) ? val.size() : _var.getSize();
+    size_t  maxSize;
+    size_t  minSize;
+    if(val.size() >= _var.getSize())
+    {
+        maxSize = val.size();
+        minSize = _var.getSize();
+    }
+    else
+    {
+        maxSize = _var.getSize();
+        minSize = val.size();
+    }
+    bool    maxIs_var = (maxSize == _var.getSize()) ? true : false;
     size_t  expVal = bitCeil(maxSize, kKaratsubaLimit) - 1;
     size_t  splitedMinSize = maxSize / (1 << expVal);
     size_t  remainder = maxSize % (1 << expVal);
     size_t  currentIndex = 0;
+    size_t  deltaSize;
     size_t  i = 0, j = 0;
-
-    unsigned long long mul;
-    unsigned int carry = 0U;
     
     if (_var == 0)
         return ExRange(0);
@@ -791,59 +839,55 @@ ExRange<int>    ExRange<int>::operator*(ExRange<int>& _var)
         result.isNegative = _var.isNegative;
 
         return  result;
-    };
+    }
     if (splitedMinSize == kKaratsubaLimit / 2 && remainder < (1 << expVal) / 2)
     {
-        for (; i < remainder; i++)
-        {
-            sizes.push_back(kKaratsubaLimit / 2 + 1);
-            sizes.push_back(kKaratsubaLimit / 2);
-        }
         for (i = 0; i < (1 << expVal) / 2 - remainder; i++)
-            sizes.push_back(kKaratsubaLimit);
+        {
+            deltaSize = currentIndex - minSize - 1;
+        }
+        for (i = 0; i < remainder; i++)
+        {
+            deltaSize = currentIndex - minSize - 1;
+            for(j = 0; j < kKaratsubaLimit / 2 + 1; j++)
+            {
+                // 
+            }
+            for(j = 0; j < kKaratsubaLimit / 2; j++)
+            {
+                // 1
+            }
+        }
     }
     else
     {
         for (; i < 1 << expVal; i++)
         {
             if (i % 2 == 0)
-                sizes.push_back(((i / 2 < remainder) ? splitedMinSize + 1 : splitedMinSize));
-            else
-                sizes.push_back(((1 << expVal) / 2 + i / 2 < remainder) ? splitedMinSize + 1 : splitedMinSize);
-        }
-    }
-    p0.startIndex = 0;
-    for (i = 0; i < sizes.size(); i++)
-    {
-        for (; j < sizes[i]; j++)
-        {
-            carry = 0U;
-            for (size_t k = 0; k < sizes[i]; k++)
             {
-                mul = (unsigned long long)val[j] * (unsigned long long)_var.val[k] + carry;
-                carry = mul / kUIntLimit;
-                mul %= kUIntLimit;
-                if (j + k == z[i % 2].getSize())
-                    z[i % 2].val.push_back(0U);
-                if (mul + z[i % 2][j + k] >= kUIntLimit)
+                for(j = 0; j < splitedMinSize; j++)
                 {
-                    carry++;
-                    z[i % 2][j + k] = (mul + z[i % 2][j + k]) - kUIntLimit;
+
                 }
-                else
-                    z[i % 2][j + k] += mul;
+                if(i / 2 >= remainder)
+                {
+
+                }
             }
-            if (carry != 0U)
-                z[i % 2].pushBack(carry);
-        }
-        if(i % 2 == 1)
-        {
-            p1.startIndex = p0.endIndex = p0.startIndex + sizes[i - 1];
-            p1.endIndex += sizes[i] + sizes[i - 1];
-            z[2] = (p0 + p1).basicMultiply(_p0 + _p1) - z[1] - z[0];
-            p0.startIndex = p1.endIndex;
+            else
+            {
+                for(j = 0; j < splitedMinSize; j++)
+                {
+
+                }
+                if((1 << expVal) / 2 + i / 2 >= remainder)
+                {
+                    
+                }
+            }
         }
     }
+    i = sizes.size() - 1;
     if (i == 1)
     {
         z[0].isNegative = result.isNegative;
@@ -856,7 +900,31 @@ ExRange<int>    ExRange<int>::operator*(ExRange<int>& _var)
 
 ExRange<int>    ExRange<int>::operator/(ExRange<int>& _var)
 {
+    ExRange<int>    result;
+    ExRangeRef<int> varRef = *this, _varRef = _var;
 
+    result.isNegative = (!_var.isNegative) ? isNegative : !isNegative;
+
+    try
+    {
+        if(_var == 0)
+        {
+            throw   0;
+        }
+    }
+    catch(const int& e)
+    {
+        cerr << "Not divisible by " << e << '\n';
+    }
+
+    if(*this < _var)
+        return  0;
+    else if(*this == _var)
+        return  1;
+    else if(_var == 1 || _var == -1)
+        return  *this;
+
+    return  result;
 };
 
 ExRange<int>    ExRange<int>::operator%(ExRange<int>& _var)
@@ -1538,6 +1606,26 @@ bool    ExRange<int>::operator<=(int _val) const
     }
 };
 
+size_t  ExRangeRef<int>::getStartIndex()
+{
+    return  startIndex;
+};
+
+void    ExRangeRef<int>::setStartIndex(const size_t& index)
+{
+    startIndex = index;
+};
+
+size_t  ExRangeRef<int>::getEndIndex()
+{
+    return  endIndex;
+};
+
+void    ExRangeRef<int>::setEndIndex(const size_t& index)
+{
+    endIndex = index;
+};
+
 ExRange<int>    ExRangeRef<int>::operator+(const ExRangeRef<int> &_varRef)
 {
     ExRange<int> result;
@@ -1653,6 +1741,115 @@ ExRangeRef<int>&    ExRangeRef<int>::operator=(const ExRangeRef<int> &_varRef)
     endIndex = _varRef.endIndex;
 
     return *this;
+};
+
+ExRange<int>    ExRangeRef<int>::basicMultiply(const ExRangeRef& _varRef) const
+{
+    ExRange<int> result;
+
+    size_t i = 0, j = 0;
+
+    unsigned long long mul;
+    unsigned int carry;
+
+    try
+    {
+        if(valRef.empty() || _varRef.valRef.empty()))
+            throw   string("There is null among operands.");
+        if(startIndex >= valRef.size() || endIndex >= valRef.size() || _varRef.startIndex >= _varRef.valRef.size() || _varRef.endIndex >= _varRef.valRef.size())
+            throw   string("Index out of range."); // 5 * 3 + 2 * 6 -> 15 + 12 ->
+    }
+    catch(const string& e)
+    {
+        cerr << e << '\n';
+    }
+
+    if (*this == 0 || _varRef == 0)
+        return ExRange(0);
+    result.isNegative = (_var < 0) ? !isNegative : isNegative;
+    if (*this == 1 || _var == 1)
+        return *this;
+    else if (_var == -1 || *this == -1)
+    {
+        return !isNegative;
+    }
+
+    for (; i < valRef.size(); i++)
+    {
+        carry = 0U;
+        for (j = 0; j < _var.val.size(); j++)
+        {
+            mul = (unsigned long long)val[i] * (unsigned long long)_var.val[j] + carry;
+            carry = mul / kUIntLimit;
+            mul %= kUIntLimit;
+            if (i + j == result.val.size())
+                result.val.push_back(0U);
+            if (mul + result[i + j] >= kIntLimit)
+            {
+                carry++;
+                result[i + j] = (mul + result[i + j]) - kUIntLimit;
+            }
+            else
+                result[i + j] += mul;
+        }
+        if (carry != 0U)
+            result.pushBack(carry);
+    }
+
+    return result;
+};
+
+bool    ExRangeRef<int>::operator==(const int& _var) const
+{
+    if (valRef.size() > 1)
+        return false;
+    else if (val.size() == 1)
+    {
+        if (!isNegative)
+        {
+            if (val[0] == _val)
+                return true;
+            return false;
+        }
+        else
+        {
+            if (val[0] == _val * -1)
+                return true;
+            return false;
+        }
+    }
+    else
+        return false;
+};
+
+bool    ExRangeRef<int>::operator==(const int& _val) const
+{
+
+};
+
+bool    ExRangeRef<int>::operator!=(const int& _val) const
+{
+
+};
+
+bool    ExRangeRef<int>::operator<(int _val) const
+{
+
+};
+
+bool    ExRangeRef<int>::operator>(int _val) const
+{
+
+};
+
+bool    ExRangeRef<int>::operator<=(int _val) const
+{
+
+};
+
+bool    ExRangeRef<int>::operator>=(int _val) const
+{
+
 };
 
 template<>
