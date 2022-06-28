@@ -74,21 +74,36 @@ size_t bitCeil(size_t operand, size_t div)
     return size + 1;
 };
 
-template<typename T>
-class MemoryManager
+
+class InstanceManager
 {
 private:
-    static MemoryManager*   instance;
-    MemoryManager();
-    ~MemoryManager();
+    static InstanceManager*   instance;
+    vector<void*>  instances;
+    InstanceManager();
+    ~InstanceManager();
 public:
-    static  MemoryManager& getIstnace()
+    static  InstanceManager& getInstance()
     {
         if(instance == nullptr)
-            instance = new MemoryManager();
+            instance = new InstanceManager();
         return  *instance;
     };
+    inline void    pushBackInstance(void* ptr)
+    {
+        instances.push_back(ptr);
+    };
+    inline void    popBackInstance()
+    {
+        instances.pop_back();
+    };
+    void    instanceCycleCount()
+    {
+
+    };
 };
+
+InstanceManager* InstanceManager::instance = nullptr;
 
 template<typename T>
 class ExRange
@@ -107,6 +122,7 @@ class ExRange<int>
 private:
     vector<unsigned int> val;
     bool    isNegative;
+    InstanceManager&    instance;
 public:
     ExRange();
     ExRange(const int &_val);
@@ -114,9 +130,13 @@ public:
     ExRange(const unsigned long long &_val);
     ExRange(const ExRange &_var);
     ExRange(const string &_varStr);
+
+    friend istream& operator>>(istream &in, const ExRange& _var);
+    friend ostream& operator<<(ostream &out, const ExRange& _var);
     ExRange operator=(const ExRange& _var);
     ExRange operator=(const string& _valStr);
     inline unsigned int&   operator[](size_t index);
+
     void    clear();
     bool    getNegativeSign();
     bool&   getNegativeSignRef();
@@ -134,6 +154,11 @@ public:
     ExRange operator%(const int _val) const;
     ExRange operator+(int _val) const;
     ExRange operator-(int _val) const;
+    friend const ExRange&   operator*(const int& val, const ExRange& _var);
+    friend const ExRange&   operator/(const int& val, const ExRange& _var);
+    friend const ExRange&   operator%(const int& val, const ExRange& _var);
+    friend const ExRange&   operator+(const int& val, const ExRange& _var);
+    friend const ExRange&   operator-(const int& val, const ExRange& _var);
     ExRange operator*(ExRange& _var);
     ExRange operator/(ExRange& _var);
     ExRange operator%(ExRange& _var);
@@ -165,6 +190,10 @@ public:
     bool    operator<(const ExRange& _var) const;
     bool    operator>=(const ExRange& _var) const;
     bool    operator<=(const ExRange& _var) const;
+
+    friend class ExRange<unsigned int>;
+    friend class ExRange<float>;
+    friend class ExRange<double>;
 };
 
 template<typename T>
@@ -323,6 +352,15 @@ ExRange<int>::ExRange(const string &_valStr)
     }
 };
 
+istream&    ExRange<int>::operator>>(istream& in, const ExRange<int>& _var)
+{
+
+};
+ostream&    ExRange<int>::operator<<(ostream& out, const ExRange<int>& _var)
+{
+
+};
+
 ExRange<int>    ExRange<int>::operator=(const ExRange& _var)
 {
     val.clear();
@@ -404,7 +442,9 @@ ExRange<int>    ExRange<int>::operator=(const string& _valStr)
     return *this;
 };
 
-inline unsigned int&   ExRange<int>::operator[](size_t index)
+
+
+unsigned int&   ExRange<int>::operator[](size_t index)
 {
     return  val[index];
 };
@@ -548,6 +588,7 @@ unsigned int    ExRange<int>::divideAndGetRemainder(ExRange<int>& var, const uns
 ExRange<int>&    ExRange<int>::operator*(int _val) const
 {
     ExRange<int>*   result = new ExRange<int>();
+    InstanceManager::getInstance().pushBackInstance(result);
 
     size_t i = 0;
 
@@ -589,7 +630,7 @@ ExRange<int>&    ExRange<int>::operator*(int _val) const
 
 ExRange<int>    ExRange<int>::operator/(int _val) const
 {
-    ExRange<int> result;
+    ExRange<int> result = new ExRange<int>();
 
     size_t i = val.size() - 1;
 
@@ -1865,9 +1906,45 @@ class ExRangeRef<float>
 template<>
 class ExRange<double>
 {
+    private:
+        vector<double>  val;
+    public:
+        ExRange();
+        ExRange(const ExRange& _var);
+        ExRange(const string& _valStr);
+        ~ExRange();
+        ExRange&    operator=(const ExRange& _var);
+        ExRange&    operator=(const string& _valStr);
+        inline double& operator[](size_t index);
+
+        inline vector<double>& getValuesRef()
+        {
+            return  val;
+        };
+        ExRange&    operator*(const int& _val);
+        ExRange&    operator/(const int& _val);
+        ExRange&    operator+(const int& _val);
+        ExRange&    operator-(const int& _val);
+        ExRange&    operator*(const ExRange<int>& _var);
+        ExRange&    operator/(const ExRange<int>& _var);
+        ExRange&    operator+(const ExRange<int>& _var);
+        ExRange&    operator-(const ExRange<int>& _var);
+        ExRange&    operator*(const ExRange<double>& _var);
+        ExRange&    operator/(const ExRange<double>& _var);
+        ExRange&    operator+(const ExRange<double>& _var);
+        ExRange&    operator-(const ExRange<double>& _var);
 };
 
 template<>
 class ExRangeRef<double>
 {
+    private:
+        vector<double>& valRef;
+        size_t  startIndex, endIndex;
+    public:
+        ExRangeRef(ExRange<double>& _var, const size_t& _startIndex, const size_t& _endIndex) : valRef(_var.getValuesRef())
+        {
+            startIndex = _startIndex;
+            endIndex = _endIndex;
+        };
 };
