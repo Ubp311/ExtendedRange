@@ -101,7 +101,7 @@ string	parse(const string& str, int* val2Ptr)
 
 int main(int argc, char* argv[])
 {
-	ExRange<int>	val = 1;
+	bigMath::ExRange<int>	val = 1;
 
 	for(int i = 1; i <= 100000; i++)
 		val *= i;
