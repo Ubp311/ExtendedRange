@@ -101,59 +101,10 @@ string	parse(const string& str, int* val2Ptr)
 
 int main(int argc, char* argv[])
 {
-	/*while(true)
-	{
-		string	val1Str;
-		int	val2;
-		char	op;
+	ExRange<int>	val = 1;
 
-		cout << "Input the first value string : ";
-		cin >> val1Str;
-		if(!val1Str.compare("exit"))
-			break;
-		cout << "Input the second value : ";
-		cin >> val2;
-		if(!val1Str.compare("exit"))
-			break;
-		cout << "Input the operator : ";
-		cin >> op;
-		if(!val1Str.compare("exit"))
-			break;
-		switch (op)
-		{
-		case '+':
-			cout << ExRange<int>::decode(ExRange<int>(val1Str) + val2) << endl;
-			break;
-		case '-':
-
-			cout << ExRange<int>::decode(ExRange<int>(val1Str) - val2) << endl;
-			break;
-		case '*':
-			cout << ExRange<int>::decode(ExRange<int>(val1Str) * val2) << endl;
-			break;
-		case '/':
-			cout << ExRange<int>::decode(ExRange<int>(val1Str) / val2) << endl;
-			break;
-		case '%':
-			cout << "Implementing.." << endl;
-			break;6
-		default:
-			cout << "Error : Unknown operator" << endl;
-			break;
-		}
-	}*/
-
-	ExRange<int>	val1("42384239482948234928429348");
-	int	val2 = 23423492;
-	// ExRange<int>	val2("43289483242394823942");
-	ExRange<int>	result;
-
-	result = val1 + val2;
-
-	cout << ExRange<int>::decode(val1) << endl;
-
-	//cout << ExRange<int>::decode(result) << endl;
-
+	for(int i = 1; i <= 100000; i++)
+		val *= i;
 	/*random_device rd1, rd2;
 
 	mt19937_64 gen1(rd1()), gen2(rd2());
